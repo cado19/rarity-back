@@ -108,7 +108,7 @@ class Customer
         $stmt = $this->con->prepare($query);
 
         //execuute the query
-        $stmt->execute([$this->id]);
+        $stmt->execute();
 
         return $stmt;
     }
