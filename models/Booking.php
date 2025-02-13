@@ -241,6 +241,24 @@ class Booking
         }
     }
 
+    public function complete_booking()
+    {
+        $status = "complete";
+        $sql    = "UPDATE bookings SET status = ? WHERE id = ?";
+        $stmt   = $this->con->prepare($sql);
+
+        if ($stmt->execute([$status, $this->id])) {
+            // $this->id = $this->con->lastInsertId();
+            return true;
+        } else {
+            // print error if something goes wrong
+            printf("Error :  % s . \n ", $stmt->error);
+            return false;
+        }
+    }
+
+    
+
     public function extend_booking()
     {
         $sql  = "UPDATE bookings SET end_date = ?, total = ? WHERE id = ?";
@@ -286,6 +304,29 @@ class Booking
 
         $row              = $stmt->fetch(PDO::FETCH_ASSOC);
         $this->vehicle_id = $row['vehicle_id'];
+    }
+
+    public function get_voucher_details(){
+        $sql  = "SELECT b.id, b.booking_no, b.custom_rate, b.total, b.start_date, b.start_time, b.end_date, b.end_time, b.created_at, vb.make, vb.model, vb.number_plate, vp.daily_rate, c.first_name, c.last_name FROM bookings b INNER JOIN vehicle_basics vb ON b.vehicle_id = vb.id INNER JOIN customer_details c ON b.customer_id = c.id INNER JOIN vehicle_pricing vp ON b.vehicle_id = vp.vehicle_id WHERE b.id = ?";
+
+        $stmt = $this->con->prepare($sql);
+        $stmt->execute([$this->id]);
+        $row              = $stmt->fetch(PDO::FETCH_ASSOC);
+        $this->id = $row['id'];
+        $this->booking_no = $row['booking_no'];
+        $this->custom_rate = $row['custom_rate'];
+        $this->total = $row['total'];
+        $this->start_date = $row['start_date'];
+        $this->start_time = $row['start_time'];
+        $this->end_date = $row['end_date'];
+        $this->end_time = $row['end_time'];
+        $this->created_at = $row['created_at'];
+        $this->make = $row['make'];
+        $this->model = $row['model'];
+        $this->number_plate = $row['number_plate'];
+        $this->daily_rate = $row['daily_rate'];
+        $this->c_fname = $row['first_name'];
+        $this->c_lname = $row['last_name'];
     }
 
 }
