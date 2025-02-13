@@ -21,6 +21,8 @@ $db       = $database->connect();
 // instantiate customer object
 $customer = new Customer($db);
 
+$response = [];
+
 // Get the raw posted data
 $data = json_decode(file_get_contents("php://input"));
 
@@ -42,14 +44,38 @@ $customer->residential_address = $data->residential_address;
 $customer->work_address        = $data->work_address;
 $customer->date_of_birth       = $data->date_of_birth;
 
-// echo $customer->last_name;
+// echo json_encode($customer->last_name);
 
-if ($customer->create()) {
-    echo json_encode(
-        ['message' => 'Customer Created', 'customer_id' => $customer->id]
-    );
+//check if client exists in db with associated email
+$result = $customer->check_unique_email();
+
+if ($result->rowCount() > 0) {
+    $status = "Error";
+    $message = "An account exists with this email.";
+    $response['status'] = $status;
+    $response['message'] = $message;
+    echo json_encode($response);
 } else {
-    echo json_encode(
-        ['message' => 'Customer Not Created']
-    );
+    // code...
+    if ($customer->create()) {
+        $status = "Success";
+        $message = "Customer Created";
+        $response['status'] = $status;
+        $response['message'] = $message;
+        $response['customer_id'] = $customer->id;
+
+        echo json_encode($response);
+ 
+    } else {
+        $status = "Error";
+        $message = "Customer Not Created.";
+        $response['status'] = $status;
+        $response['message'] = $message;
+
+        echo json_encode($response);
+
+    }
 }
+
+
+
