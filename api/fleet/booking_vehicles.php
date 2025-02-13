@@ -18,6 +18,7 @@ $db       = $database->connect();
 // instantiate blog post object
 $fleet = new Fleet($db);
 
+$response = [];
 // vehicles query as a function
 $result = $fleet->booking_vehicles();
 
@@ -45,12 +46,18 @@ if ($num > 0) {
         array_push($fleet_arr['vehicles'], $fleet_item);
 
     }
+    $status = 'Success';
+    $message = 'Successfully fetched vehicles for booking';
+    $response['status'] = $status;
+    $response['message'] = $message;
+    $response['vehicles'] = $fleet_arr['vehicles'];
     // convert the posts to json
-    echo json_encode($fleet_arr);
+    echo json_encode($response);
 } else {
     // No posts found in the database ($num = 0)
     $response = [
-        'messsage' => 'No posts found',
+        'messsage' => 'No vehicles found',
+        'status' => 'Error'
     ];
     echo json_encode($response);
 }
