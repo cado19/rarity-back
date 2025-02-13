@@ -36,23 +36,17 @@ class Customer
     public function read()
     {
         $status = "false";
-        try {
-            $this->con->beginTransaction();
+
             //create the query
             $query = "SELECT id, first_name, last_name, email, id_no, phone_no FROM customer_details WHERE deleted = ? ORDER BY first_name DESC";
 
             // prepare statement
             $stmt = $this->con->prepare($query);
 
-            //execuute the query
+            //execute the query
             $stmt->execute([$status]);
 
-            $this->con->commit();
-        } catch (Exception $e) {
-            $this->con->rollback();
-        }
-
-        return $stmt;
+            return $stmt;
 
     }
 
@@ -62,7 +56,7 @@ class Customer
         $status = "false";
 
         //create the query
-        $query = "SELECT id, first_name, last_name, email, id_no, phone_no, dl_expiration, residential_address, work_address, date_of_birth, id_image, id_back_image, profile_image, license_image FROM customer_details WHERE deleted =  ? and id =  ? ORDER BY first_name DESC LIMIT 0, 1";
+        $query = "SELECT id, first_name, last_name, email, id_no, phone_no, dl_expiration, residential_address, work_address, date_of_birth, id_image, id_back_image, profile_image, license_image FROM customer_details WHERE deleted =  ? and id = ? LIMIT 0, 1";
 
         // prepare statement
         $stmt = $this->con->prepare($query);
@@ -155,7 +149,7 @@ class Customer
         try {
             $this->con->beginTransaction();
             // Create the query
-            $query = "SELECT id, first_name, last_name FROMcustomer_detailsWHEREdeleted =  ? ORDER BYidDESC";
+            $sql = "SELECT id, first_name, last_name FROM customer_details WHERE deleted =  ? ORDER BY id DESC";
 
             // prepare the statement
             $stmt = $this->con->prepare($sql);
@@ -169,5 +163,63 @@ class Customer
 
         return $stmt;
     }
+
+    public function check_unique_email(){
+        $sql = "SELECT id FROM customer_details WHERE email LIKE ?";
+
+        // prepare the statement
+        $stmt = $this->con->prepare($sql);
+
+        $stmt->execute([$this->email]);
+
+        return $stmt;
+    }
+
+    public function save_license(){
+        $sql = "UPDATE customer_details SET license_image = ? WHERE id = ?";
+
+        // prepare the statement
+        $stmt = $this->con->prepare($sql);
+
+        if ($stmt->execute([$this->license_image, $this->id])) {
+            return true;
+        } else {
+                      // print error if something goes wrong
+            printf("Error :  % s . \n ", $stmt->error);
+            return false;
+        }
+    }
+
+    public function save_id(){
+        $sql = "UPDATE customer_details SET id_image = ?, id_back_image = ? WHERE id = ?";
+
+        // prepare the statement
+        $stmt = $this->con->prepare($sql);
+
+        if ($stmt->execute([$this->id_image, $this->id_back_image, $this->id])) {
+            return true;
+        } else {
+                      // print error if something goes wrong
+            printf("Error :  % s . \n ", $stmt->error);
+            return false;
+        }
+    }   
+
+    public function save_profile_image(){
+        $sql = "UPDATE customer_details SET profile_image = ? WHERE id = ?";
+
+        // prepare the statement
+        $stmt = $this->con->prepare($sql);
+
+        if ($stmt->execute([$this->profile_image, $this->id])) {
+            return true;
+        } else {
+                      // print error if something goes wrong
+            printf("Error :  % s . \n ", $stmt->error);
+            return false;
+        }
+    }
+
+    
 
 }
