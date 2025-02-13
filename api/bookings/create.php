@@ -13,6 +13,7 @@ include_once '../../config/Database.php';
 include_once '../../models/Booking.php';
 include_once '../../models/Account.php';
 include_once '../../models/Fleet.php';
+include_once '../../models/Contract.php';
 
 // Instantiate The DB and connect to it
 $database = new Database();
@@ -21,6 +22,7 @@ $db       = $database->connect();
 $booking = new Booking($db);
 $account = new Account($db);
 $fleet   = new Fleet($db);
+$contract = new Contract($db);
 
 // 1. get the custom rate or check if it is 0
 // 2. if custom rate is greater than 0, get the vehicle's category_id
@@ -30,8 +32,9 @@ $fleet   = new Fleet($db);
 // 6. multiply duration by daily rate
 
 $data = json_decode(file_get_contents('php://input'));
+
 // properties of booking class
-$booking->customer_id = $data->customer_id;
+$booking->c_id = $data->customer_id;
 $booking->vehicle_id  = $data->vehicle_id;
 $booking->d_id        = $data->driver_id;
 $booking->start_date  = $data->start_date;
@@ -88,6 +91,17 @@ if (! empty($data->custom_rate)) {
             $booking->booking_no = $no;
             $booking->save_booking_number();
             // create contract
+            $contract->booking_id = $booking->id;
+            $contract->create();
+            // return response 
+            $message = "Successfully created booking";
+            $status = "Success";
+            $booking_id = $booking->id;
+
+            $response['message'] = $message;
+            $response['status'] = $status;
+            $response['booking_id'] = $booking_id;
+            echo json_encode($response);
         } else {
             $message = "An error occured. Try again later";
             $status  = "Error";
@@ -107,14 +121,19 @@ if (! empty($data->custom_rate)) {
         $no                  = "B-" . str_pad($booking->id, 3, "0", STR_PAD_LEFT);
         $booking->booking_no = $no;
         $booking->save_booking_number();
-        $message = "Booking successfully created";
-        $status  = "Success";
-        array_push($response, $status);
-        array_push($response, $message);
-        array_push($response, $booking->id);
-        echo json_encode($response);
 
         // create contract
+        $contract->booking_id = $booking->id;
+        $contract->create();
+        // return response 
+        $message = "Successfully created booking";
+        $status = "Success";
+        $booking_id = $booking->id;
+
+        $response['message'] = $message;
+        $response['status'] = $status;
+        $response['booking_id'] = $contract->booking_id;
+        echo json_encode($response);
     } else {
         $message = "An error occured. Try again later";
         $status  = "Error";
