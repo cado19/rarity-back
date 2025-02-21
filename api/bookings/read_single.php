@@ -43,6 +43,7 @@ $booking_arr = [
     'status'       => $booking->status,
     'ct_status'    => $booking->ct_status,
     'daily_rate'   => $booking->daily_rate,
+    'custom_rate'  => $booking->custom_rate,
     'total'        => $booking->total,
     'make'         => $booking->make,
     'model'        => $booking->model,
