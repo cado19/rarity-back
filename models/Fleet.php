@@ -18,6 +18,10 @@ class Fleet
     public $category_id;
     public $category_name;
     public $vehicle_excess;
+    public $issue_id;
+    public $issue_title;
+    public $resolution_cost;
+    public $resolution_date;
     public $title; // to be used in getting vehicle make, model, number plate for calendar
     public $created_at;
 
@@ -93,12 +97,13 @@ class Fleet
 
         if ($stmt->execute([$this->title, $this->body, $this->author, $this->category_id])) {
             return true;
+        } else {
+
+            // print error if something goes wrong
+            printf("Error: %s.\n", $stmt->error);
+            return false;
         }
 
-        // print error if something goes wrong
-        printf("Error: %s.\n", $stmt->error);
-
-        return false;
     }
 
     // function to retrieve all categories for saving a vehicle
@@ -176,6 +181,23 @@ class Fleet
         // $this->category_id = row['category_id'];
 
         return $stmt;
+    }
+
+    // VEHICLE ISSUES FUNCTIONS
+    public function read_issues()
+    {
+        $sql  = "SELECT vb.make, vb.model, vb.number_plate, vi.title, vi.resolution_cost, vi.status FROM vehicle_issues vi INNER JOIN vehicle_basics vb ON vi.vehicle_id = vb.id ORDER BY created_at DESC";
+        $stmt = $this->con->prepare($query);
+        $stmt->execute();
+
+        return $stmt;
+    }
+
+    public function read_issue()
+    {
+        $sql  = "SELECT vb.make, vb.model, vb.number_plate, vi.title, vi.resolution_cost, vi.status FROM vehicle_issues vi INNER JOIN vehicle_basics vb ON vi.vehicle_id = vb.id WHERE vi.id = ? ORDER BY created_at DESC";
+        $stmt = $this->con->prepare($query);
+        $stmt->execute([$this->issue_id]);
     }
 
 }

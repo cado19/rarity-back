@@ -28,7 +28,8 @@ class Booking
     public $model;
     public $vehicle_id;
     public $number_plate;
-    public $group; // this text is used for the gantt chart in the front end
+    public $account_id; // user id of the person who created the booking
+    public $group;      // this text is used for the gantt chart in the front end
     public $title;
     public $created_at;
 
@@ -188,9 +189,10 @@ class Booking
 
     public function create_custom_booking()
     {
-        $sql  = "INSERT INTO bookings (customer_id, vehicle_id, driver_id, start_date, end_date, start_time, end_time, custom_rate, total, account_id) VALUES (?,?,?,?,?,?,?,?,?,?)";
-        $stmt = $this->con->prepare($sql);
-        if ($stmt->execute([$this->c_id, $this->vehicle_id, $this->d_id, $this->start_date, $this->end_date, $this->start_time, $this->end_time, $this->custom_rate, $this->total, $this->account_id])) {
+        $status = "upcoming";
+        $sql    = "INSERT INTO bookings (customer_id, vehicle_id, driver_id, start_date, end_date, start_time, end_time, custom_rate, total, account_id, status) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
+        $stmt   = $this->con->prepare($sql);
+        if ($stmt->execute([$this->c_id, $this->vehicle_id, $this->d_id, $this->start_date, $this->end_date, $this->start_time, $this->end_time, $this->custom_rate, $this->total, $this->account_id, $status])) {
             $this->id = $this->con->lastInsertId();
             return true;
         } else {
@@ -257,8 +259,6 @@ class Booking
         }
     }
 
-    
-
     public function extend_booking()
     {
         $sql  = "UPDATE bookings SET end_date = ?, total = ? WHERE id = ?";
@@ -306,27 +306,28 @@ class Booking
         $this->vehicle_id = $row['vehicle_id'];
     }
 
-    public function get_voucher_details(){
-        $sql  = "SELECT b.id, b.booking_no, b.custom_rate, b.total, b.start_date, b.start_time, b.end_date, b.end_time, b.created_at, vb.make, vb.model, vb.number_plate, vp.daily_rate, c.first_name, c.last_name FROM bookings b INNER JOIN vehicle_basics vb ON b.vehicle_id = vb.id INNER JOIN customer_details c ON b.customer_id = c.id INNER JOIN vehicle_pricing vp ON b.vehicle_id = vp.vehicle_id WHERE b.id = ?";
+    public function get_voucher_details()
+    {
+        $sql = "SELECT b.id, b.booking_no, b.custom_rate, b.total, b.start_date, b.start_time, b.end_date, b.end_time, b.created_at, vb.make, vb.model, vb.number_plate, vp.daily_rate, c.first_name, c.last_name FROM bookings b INNER JOIN vehicle_basics vb ON b.vehicle_id = vb.id INNER JOIN customer_details c ON b.customer_id = c.id INNER JOIN vehicle_pricing vp ON b.vehicle_id = vp.vehicle_id WHERE b.id = ?";
 
         $stmt = $this->con->prepare($sql);
         $stmt->execute([$this->id]);
-        $row              = $stmt->fetch(PDO::FETCH_ASSOC);
-        $this->id = $row['id'];
-        $this->booking_no = $row['booking_no'];
-        $this->custom_rate = $row['custom_rate'];
-        $this->total = $row['total'];
-        $this->start_date = $row['start_date'];
-        $this->start_time = $row['start_time'];
-        $this->end_date = $row['end_date'];
-        $this->end_time = $row['end_time'];
-        $this->created_at = $row['created_at'];
-        $this->make = $row['make'];
-        $this->model = $row['model'];
+        $row                = $stmt->fetch(PDO::FETCH_ASSOC);
+        $this->id           = $row['id'];
+        $this->booking_no   = $row['booking_no'];
+        $this->custom_rate  = $row['custom_rate'];
+        $this->total        = $row['total'];
+        $this->start_date   = $row['start_date'];
+        $this->start_time   = $row['start_time'];
+        $this->end_date     = $row['end_date'];
+        $this->end_time     = $row['end_time'];
+        $this->created_at   = $row['created_at'];
+        $this->make         = $row['make'];
+        $this->model        = $row['model'];
         $this->number_plate = $row['number_plate'];
-        $this->daily_rate = $row['daily_rate'];
-        $this->c_fname = $row['first_name'];
-        $this->c_lname = $row['last_name'];
+        $this->daily_rate   = $row['daily_rate'];
+        $this->c_fname      = $row['first_name'];
+        $this->c_lname      = $row['last_name'];
     }
 
 }

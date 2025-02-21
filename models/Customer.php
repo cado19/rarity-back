@@ -37,16 +37,16 @@ class Customer
     {
         $status = "false";
 
-            //create the query
-            $query = "SELECT id, first_name, last_name, email, id_no, phone_no FROM customer_details WHERE deleted = ? ORDER BY first_name DESC";
+        //create the query
+        $query = "SELECT id, first_name, last_name, email, id_no, phone_no FROM customer_details WHERE deleted = ? ORDER BY first_name DESC";
 
-            // prepare statement
-            $stmt = $this->con->prepare($query);
+        // prepare statement
+        $stmt = $this->con->prepare($query);
 
-            //execute the query
-            $stmt->execute([$status]);
+        //execute the query
+        $stmt->execute([$status]);
 
-            return $stmt;
+        return $stmt;
 
     }
 
@@ -164,7 +164,8 @@ class Customer
         return $stmt;
     }
 
-    public function check_unique_email(){
+    public function check_unique_email()
+    {
         $sql = "SELECT id FROM customer_details WHERE email LIKE ?";
 
         // prepare the statement
@@ -175,7 +176,8 @@ class Customer
         return $stmt;
     }
 
-    public function save_license(){
+    public function save_license()
+    {
         $sql = "UPDATE customer_details SET license_image = ? WHERE id = ?";
 
         // prepare the statement
@@ -184,13 +186,14 @@ class Customer
         if ($stmt->execute([$this->license_image, $this->id])) {
             return true;
         } else {
-                      // print error if something goes wrong
+            // print error if something goes wrong
             printf("Error :  % s . \n ", $stmt->error);
             return false;
         }
     }
 
-    public function save_id(){
+    public function save_id()
+    {
         $sql = "UPDATE customer_details SET id_image = ?, id_back_image = ? WHERE id = ?";
 
         // prepare the statement
@@ -199,13 +202,14 @@ class Customer
         if ($stmt->execute([$this->id_image, $this->id_back_image, $this->id])) {
             return true;
         } else {
-                      // print error if something goes wrong
+            // print error if something goes wrong
             printf("Error :  % s . \n ", $stmt->error);
             return false;
         }
-    }   
+    }
 
-    public function save_profile_image(){
+    public function save_profile_image()
+    {
         $sql = "UPDATE customer_details SET profile_image = ? WHERE id = ?";
 
         // prepare the statement
@@ -214,12 +218,10 @@ class Customer
         if ($stmt->execute([$this->profile_image, $this->id])) {
             return true;
         } else {
-                      // print error if something goes wrong
+            // print error if something goes wrong
             printf("Error :  % s . \n ", $stmt->error);
             return false;
         }
     }
-
-    
 
 }
