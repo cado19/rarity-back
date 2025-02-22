@@ -295,6 +295,7 @@ class Booking
         $row               = $stmt->fetch(PDO::FETCH_ASSOC);
         $this->custom_rate = $row['custom_rate'];
     }
+
     // get vehicle_id from db to be used in getting daily rate and calculating total when extending a booking
     public function get_vehicle_id()
     {
@@ -328,6 +329,37 @@ class Booking
         $this->daily_rate   = $row['daily_rate'];
         $this->c_fname      = $row['first_name'];
         $this->c_lname      = $row['last_name'];
+    }
+
+    public function update_booking_details()
+    {
+
+        $sql  = "UPDATE bookings SET vehicle_id = ?, customer_id = ?, driver_id = ?, start_date = ?, end_date = ?, start_time = ?, end_time = ?, custom_rate = ?, total = ? WHERE id = ?";
+        $stmt = $this->con->prepare($sql);
+        if ($stmt->execute([$this->vehicle_id, $this->c_id, $this->d_id, $this->start_date, $this->end_date, $this->start_time, $this->end_time, $this->custom_rate, $total, $this->id])) {
+            $this->id = $this->con->lastInsertId();
+            return true;
+        } else {
+            // print error if something goes wrong
+            printf("Error :  % s . \n ", $stmt->error);
+            return false;
+        }
+
+    }
+
+    public function custom_booking_update()
+    {
+
+        $sql  = "UPDATE bookings SET vehicle_id = ?, customer_id = ?, driver_id = ?, start_date = ?, end_date = ?, start_time = ?, end_time = ?, custom_rate = ?, total = ? WHERE id = ?";
+        $stmt = $this->con->prepare($sql);
+        if ($stmt->execute([$this->vehicle_id, $this->c_id, $this->d_id, $this->start_date, $this->end_date, $this->start_time, $this->end_time, $this->custom_rate, $this->total, $this->id])) {
+            $this->id = $this->con->lastInsertId();
+            return true;
+        } else {
+            // print error if something goes wrong
+            printf("Error :  % s . \n ", $stmt->error);
+            return false;
+        }
     }
 
 }
