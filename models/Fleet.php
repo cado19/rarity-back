@@ -16,6 +16,7 @@ class Fleet
     public $transmission;
     public $daily_rate;
     public $category_id;
+    public $colour;
     public $category_name;
     public $vehicle_excess;
     public $issue_id;
@@ -84,18 +85,19 @@ class Fleet
     public function create()
     {
         // Create the query
-        $sql = "INSERT INTO posts (title, body, author, category_id) VALUES (?,?,?,?)";
+        $sql = "INSERT INTO vehicle_basics (make, model, number_plate, category_id, fuel, seats, transmission, drive_train) VALUES (?,?,?,?,?,?,?,?)";
 
         // prepare the statement
         $stmt = $this->con->prepare($sql);
 
         //clean the data
-        $this->title       = htmlspecialchars(strip_tags($this->title));
-        $this->body        = htmlspecialchars(strip_tags($this->body));
-        $this->author      = htmlspecialchars(strip_tags($this->author));
-        $this->category_id = htmlspecialchars(strip_tags($this->category_id));
+        // $this->title       = htmlspecialchars(strip_tags($this->title));
+        // $this->body        = htmlspecialchars(strip_tags($this->body));
+        // $this->author      = htmlspecialchars(strip_tags($this->author));
+        // $this->category_id = htmlspecialchars(strip_tags($this->category_id));
 
-        if ($stmt->execute([$this->title, $this->body, $this->author, $this->category_id])) {
+        if ($stmt->execute([$this->make, $this->model, $this->number_plate, $this->category_id, $this->fuel, $this->seats, $this->transmission, $this->drive_train])) {
+            $this->id = $this->con->lastInsertId();
             return true;
         } else {
 
@@ -103,6 +105,32 @@ class Fleet
             printf("Error: %s.\n", $stmt->error);
             return false;
         }
+
+    }
+
+    public function create_pricing()
+    {
+        $sql = "INSERT INTO vehicle_pricing (vehicle_id, daily_rate, vehicle_excess) VALUES (?,?,?)";
+
+        // prepare the statement
+        $stmt = $this->con->prepare($sql);
+
+        if ($stmt->execute([$this->id, $this->daily_rate, $this->vehicle_excess])) {
+            return true;
+        } else {
+            // print error if something goes wrong
+            printf("Error: %s.\n", $stmt->error);
+            return false;
+        }
+    }
+
+    public function check_unique_number_plate()
+    {
+        $sql = "SELECT id FROM vehicle_basics WHERE number_plate LIKE ?";
+        // prepare the statement
+        $stmt = $this->con->prepare($sql);
+        $stmt->execute([$this->number_plate]);
+        return $stmt;
 
     }
 
