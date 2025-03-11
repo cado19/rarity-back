@@ -35,8 +35,9 @@ if ($num > 0) {
 
         // single post item array
         $fleet_item = [
-            'id'    => $id,
-            'title' => $title,
+            'id'       => $id,
+            'title'    => $title,
+            'category' => $category,
         ];
 
         // push that post item to 'data' index of array

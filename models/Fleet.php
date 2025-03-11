@@ -199,7 +199,7 @@ class Fleet
 
     public function workplan_vehicles()
     {
-        $query = "SELECT id, CONCAT(make, ' ', model, ' ', number_plate) AS title FROM vehicle_basics ORDER BY title DESC";
+        $query = "SELECT v.id, CONCAT(make, ' ', model, ' ', number_plate) AS title, cat.name AS category FROM vehicle_basics v INNER JOIN vehicle_categories cat ON v.category_id = cat.id ORDER BY title DESC";
         $stmt  = $this->con->prepare($query);
         $stmt->execute();
 
