@@ -5,8 +5,13 @@
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json');
 //header mods for customer request
-header('Access-Control-Allow-Methods: POST');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Access-Control-Allow-Headers, Access-Control-Allow-Origin, Content-Type, Access-Control-Allow-Methods, Authorization, X-Requested-With');
+
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 
 // include necessary files
 include_once '../../config/Database.php';
@@ -50,32 +55,29 @@ $customer->date_of_birth       = $data->date_of_birth;
 $result = $customer->check_unique_email();
 
 if ($result->rowCount() > 0) {
-    $status = "Error";
-    $message = "An account exists with this email.";
-    $response['status'] = $status;
+    $status              = "Error";
+    $message             = "An account exists with this email.";
+    $response['status']  = $status;
     $response['message'] = $message;
     echo json_encode($response);
 } else {
     // code...
     if ($customer->create()) {
-        $status = "Success";
-        $message = "Customer Created";
-        $response['status'] = $status;
-        $response['message'] = $message;
+        $status                  = "Success";
+        $message                 = "Customer Created";
+        $response['status']      = $status;
+        $response['message']     = $message;
         $response['customer_id'] = $customer->id;
 
         echo json_encode($response);
- 
+
     } else {
-        $status = "Error";
-        $message = "Customer Not Created.";
-        $response['status'] = $status;
+        $status              = "Error";
+        $message             = "Customer Not Created.";
+        $response['status']  = $status;
         $response['message'] = $message;
 
         echo json_encode($response);
 
     }
 }
-
-
-

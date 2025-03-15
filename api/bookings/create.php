@@ -5,8 +5,12 @@
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json');
 //header mods for customer request
-header('Access-Control-Allow-Methods: POST');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Access-Control-Allow-Headers, Access-Control-Allow-Origin, Content-Type, Access-Control-Allow-Methods, Authorization, X-Requested-With');
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 
 // include necessary files
 include_once '../../config/Database.php';
@@ -19,9 +23,9 @@ include_once '../../models/Contract.php';
 $database = new Database();
 $db       = $database->connect();
 
-$booking = new Booking($db);
-$account = new Account($db);
-$fleet   = new Fleet($db);
+$booking  = new Booking($db);
+$account  = new Account($db);
+$fleet    = new Fleet($db);
 $contract = new Contract($db);
 
 // 1. get the custom rate or check if it is 0
@@ -34,14 +38,14 @@ $contract = new Contract($db);
 $data = json_decode(file_get_contents('php://input'));
 
 // properties of booking class
-$booking->c_id = $data->customer_id;
-$booking->vehicle_id  = $data->vehicle_id;
-$booking->d_id        = $data->driver_id;
-$booking->start_date  = $data->start_date;
-$booking->end_date    = $data->end_date;
-$booking->start_time  = $data->start_time;
-$booking->end_time    = $data->end_time;
-$booking->account_id  = $data->account_id;
+$booking->c_id       = $data->customer_id;
+$booking->vehicle_id = $data->vehicle_id;
+$booking->d_id       = $data->driver_id;
+$booking->start_date = $data->start_date;
+$booking->end_date   = $data->end_date;
+$booking->start_time = $data->start_time;
+$booking->end_time   = $data->end_time;
+$booking->account_id = $data->account_id;
 
 // properties of fleet class
 $fleet->id = $data->vehicle_id;
@@ -93,13 +97,13 @@ if (! empty($data->custom_rate)) {
             // create contract
             $contract->booking_id = $booking->id;
             $contract->create();
-            // return response 
-            $message = "Successfully created booking";
-            $status = "Success";
+            // return response
+            $message    = "Successfully created booking";
+            $status     = "Success";
             $booking_id = $booking->id;
 
-            $response['message'] = $message;
-            $response['status'] = $status;
+            $response['message']    = $message;
+            $response['status']     = $status;
             $response['booking_id'] = $booking_id;
             echo json_encode($response);
         } else {
@@ -125,13 +129,13 @@ if (! empty($data->custom_rate)) {
         // create contract
         $contract->booking_id = $booking->id;
         $contract->create();
-        // return response 
-        $message = "Successfully created booking";
-        $status = "Success";
+        // return response
+        $message    = "Successfully created booking";
+        $status     = "Success";
         $booking_id = $booking->id;
 
-        $response['message'] = $message;
-        $response['status'] = $status;
+        $response['message']    = $message;
+        $response['status']     = $status;
         $response['booking_id'] = $contract->booking_id;
         echo json_encode($response);
     } else {

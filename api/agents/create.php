@@ -5,8 +5,13 @@
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json');
 //header mods for agent request
-header('Access-Control-Allow-Methods: POST');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Access-Control-Allow-Headers, Access-Control-Allow-Origin, Content-Type, Access-Control-Allow-Methods, Authorization, X-Requested-With');
+
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 
 // include necessary files
 include_once '../../config/Database.php';
