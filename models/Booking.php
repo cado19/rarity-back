@@ -362,4 +362,17 @@ class Booking
         }
     }
 
+    // when an event in the dashboard has been dragged
+    public function update_dash_dates()
+    {
+        $sql  = "UPDATE bookings SET start_date = ?, end_date = ? WHERE id = ?";
+        $stmt = $this->con->prepare($sql);
+        if ($stmt->execute([$this->start_date, $this->end_date, $this->id])) {
+            return true;
+        } else {
+            return false;
+        }
+
+    }
+
 }
