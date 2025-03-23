@@ -375,4 +375,15 @@ class Booking
 
     }
 
+    public function update_dash_vehicle()
+    {
+        $sql  = "UPDATE bookings SET vehicle_id = ?, start_date = ?, end_date = ?, total = ? WHERE id = ?";
+        $stmt = $this->con->prepare($sql);
+        if ($stmt->execute([$this->vehicle_id, $this->start_date, $this->end_date, $this->total, $this->id])) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
 }
