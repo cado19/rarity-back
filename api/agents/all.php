@@ -24,6 +24,8 @@ $result = $agent->read();
 // get row count
 $num = $result->rowCount();
 
+$response = [];
+
 //check if any agents
 
 if ($num > 0) {
@@ -46,12 +48,19 @@ if ($num > 0) {
         array_push($agent_arr['agents'], $agent_item);
 
     }
+    $message             = "Successfully fetched recent agents";
+    $status              = "Success";
+    $response['data']    = $agent_arr['agents'];
+    $response['message'] = $message;
+    $response['status']  = $status;
     // convert the posts to json
-    echo json_encode($agent_arr);
+    echo json_encode($response);
 } else {
     // No posts found in the database ($num = 0)
-    $response = [
-        'messsage' => 'No agents found',
-    ];
+    $message             = "No agents in the database";
+    $status              = "Error";
+    $response['message'] = $message;
+    $response['status']  = $status;
+
     echo json_encode($response);
 }
