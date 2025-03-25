@@ -1,5 +1,5 @@
 <?php
-// THIS FILE WILL DELIVER ALL BOOKINGS TO EXTERNAL REQUESTS
+// THIS FILE WILL DELIVER COMPLETED BOOKINGS TO EXTERNAL REQUESTS
 
 // Headers
 header('Access-Control-Allow-Origin: *');
@@ -27,7 +27,7 @@ $num = $result->rowCount();
 //check if any posts
 
 if ($num > 0) {
-    $booking_arr         = [];
+    $booking_arr             = [];
     $booking_arr['bookings'] = []; //this is where the data will go
 
     while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
@@ -35,15 +35,15 @@ if ($num > 0) {
 
         // single post item array
         $booking_item = [
-            'id'            => $id,
-            'booking_no'    => $booking_no,
-            'make'          => $make,
-            'model'         => $model,
-            'number_plate'  => $number_plate,
-            'c_fname'       => $c_fname,
-            'c_lname'       => $c_lname,
-            'start_date'    => $start_date,
-            'end_date'      => $end_date,
+            'id'           => $id,
+            'booking_no'   => $booking_no,
+            'make'         => $make,
+            'model'        => $model,
+            'number_plate' => $number_plate,
+            'c_fname'      => $c_fname,
+            'c_lname'      => $c_lname,
+            'start_date'   => $start_date,
+            'end_date'     => $end_date,
         ];
 
         // push that post item to 'data' index of array
