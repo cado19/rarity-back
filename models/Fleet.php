@@ -54,7 +54,7 @@ class Fleet
     public function read_single()
     {
         //create the query
-        $query = "SELECT vb.make, vb.model, vb.number_plate, cat.name as category_name, cat.id AS category_id, vb.drive_train, vb.seats, vb.fuel, vb.transmission, vb.image, vp.daily_rate, vp.vehicle_excess, vp.refundable_security_deposit, vp.monthly_target, ve.bluetooth, ve.keyless_entry, ve.reverse_cam, ve.audio_input, ve.gps, ve.android_auto, ve.apple_carplay FROM vehicle_basics vb INNER JOIN vehicle_pricing vp ON vb.id = vp.vehicle_id INNER JOIN vehicle_extras ve ON vb.id = ve.vehicle_id INNER JOIN vehicle_categories cat ON vb.category_id = cat.id WHERE vb.id = ? LIMIT 0,1";
+        $query = "SELECT vb.make, vb.model, vb.number_plate, cat.name as category_name, cat.id AS category_id, vb.drive_train, vb.seats, vb.fuel, vb.transmission, vb.image, vp.daily_rate, vp.vehicle_excess, vp.refundable_security_deposit, vp.monthly_target FROM vehicle_basics vb INNER JOIN vehicle_pricing vp ON vb.id = vp.vehicle_id INNER JOIN vehicle_categories cat ON vb.category_id = cat.id WHERE vb.id = ? LIMIT 0,1";
 
         // prepare statement
         $stmt = $this->con->prepare($query);
