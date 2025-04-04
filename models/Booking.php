@@ -227,6 +227,22 @@ class Booking
         return $stmt;
     }
 
+    public function activate_booking()
+    {
+        $status = "active";
+        $sql    = "UPDATE bookings SET status = ? WHERE id = ?";
+        $stmt   = $this->con->prepare($sql);
+
+        if ($stmt->execute([$status, $this->id])) {
+            // $this->id = $this->con->lastInsertId();
+            return true;
+        } else {
+            // print error if something goes wrong
+            printf("Error :  % s . \n ", $stmt->error);
+            return false;
+        }
+    }
+
     public function cancel_booking()
     {
         $status = "cancelled";

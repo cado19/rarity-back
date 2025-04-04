@@ -1,5 +1,5 @@
 <?php
-// THIS FILE WILL DELIVER HANDLE BOOKING COMPLETION
+// THIS FILE WILL DELIVER HANDLE BOOKING ACTIVATION
 
 // Headers
 header('Access-Control-Allow-Origin: *');
@@ -27,8 +27,8 @@ if (isset($_GET['id'])) {
 
 $response = [];
 
-if ($booking->complete_booking()) {
-    $message             = "Successfully completed booking";
+if ($booking->activate_booking()) {
+    $message             = "Successfully activated booking";
     $status              = "Success";
     $response['status']  = $status;
     $response['message'] = $message;
