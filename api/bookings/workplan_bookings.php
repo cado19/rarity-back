@@ -32,11 +32,13 @@ if ($num > 0) {
 
     while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
         extract($row);
-
+        // set the background color of the event based on status of the booking
         if ($status == 'active') {
             $color = 'blue';
         } elseif ($status == 'upcoming') {
             $color = 'green';
+        } elseif ($status == 'complete') {
+            $color = 'yellow';
         } else {
             $color = 'red';
         }
