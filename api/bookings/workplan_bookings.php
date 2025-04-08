@@ -34,11 +34,14 @@ if ($num > 0) {
         extract($row);
         // set the background color of the event based on status of the booking
         if ($status == 'active') {
-            $color = 'blue';
+            $color     = 'blue';
+            $textColor = 'white';
         } elseif ($status == 'upcoming') {
-            $color = 'green';
+            $color     = 'green';
+            $textColor = 'white';
         } elseif ($status == 'complete') {
-            $color = 'yellow';
+            $color     = 'yellow';
+            $textColor = 'black';
         } else {
             $color = 'red';
         }
@@ -57,6 +60,7 @@ if ($num > 0) {
             'start_time' => $start_time,
             'end_time'   => $end_time,
             'status'     => $color,
+            'textColor'  => $textColor,
         ];
 
         // push that post item to 'data' index of array
