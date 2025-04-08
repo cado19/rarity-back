@@ -96,13 +96,13 @@ class Customer
         }
 
         //create the query
-        $query = "SELECT id, first_name, last_name, email, id_no, phone_no FROM customer_details WHERE deleted =  ? ORDER BY created_at DESC LIMIT 10";
+        $query = "SELECT id, first_name, last_name, email, id_no, phone_no FROM customer_details WHERE deleted = ? ORDER BY created_at DESC LIMIT 10";
 
         // prepare statement
         $stmt = $this->con->prepare($query);
 
         //execuute the query
-        $stmt->execute();
+        $stmt->execute([$status]);
 
         return $stmt;
     }
