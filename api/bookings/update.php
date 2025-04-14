@@ -93,9 +93,8 @@ if (! empty($data->custom_rate)) {
         $booking->total       = $total;
         $booking->custom_rate = $data->custom_rate;
         if ($booking->custom_booking_update()) {
-            $message = "Successfully updated booking";
-            $status  = "Success";
-
+            $message             = "Successfully updated booking";
+            $status              = "Success";
             $response['message'] = $message;
             $response['status']  = $status;
             echo json_encode($response);
@@ -114,7 +113,7 @@ if (! empty($data->custom_rate)) {
     $fleet->get_daily_rate();
     $booking->total       = $fleet->daily_rate * $duration;
     $booking->custom_rate = 0;
-    if ($booking->create_booking()) {
+    if ($booking->update_booking_details()) {
         // return response
         $message = "Successfully updated booking";
         $status  = "Success";

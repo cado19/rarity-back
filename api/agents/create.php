@@ -31,15 +31,17 @@ $response = [];
 // Get the raw posted data
 $data = json_decode(file_get_contents("php://input"));
 
+$tmp_password = "1234";
+
 $agent->name     = $data->name;
 $agent->email    = $data->email;
 $agent->country  = $data->country;
 $agent->role_id  = $data->role_id;
-$agent->password = $data->password;
-$agent->phone_no = $data->phone_no;
+$agent->password = password_hash($tmp_password, PASSWORD_DEFAULT);
+$agent->phone_no = $data->phone_number;
 
 //check if client exists in db with associated email
-$result = $customer->check_unique_email();
+$result = $agent->check_unique_email();
 
 if ($result->rowCount() > 0) {
     $status              = "Error";
@@ -50,6 +52,24 @@ if ($result->rowCount() > 0) {
 } else {
     // code...
     if ($agent->create()) {
+        // create agent commissions
+        $agent->create_suv_commission();
+        $agent->create_mid_size_suv_commission();
+        $agent->create_medium_car_commission();
+        $agent->create_small_car_commission();
+        $agent->create_safari_commission();
+        $agent->create_luxury_commission();
+        $agent->create_commercial_commission();
+
+        //create agent rates
+        $agent->create_suv_rate();
+        $agent->create_mid_size_suv_rate();
+        $agent->create_medium_car_rate();
+        $agent->create_small_car_rate();
+        $agent->create_safari_rate();
+        $agent->create_luxury_rate();
+        $agent->create_commercial_rate();
+
         $status               = "Success";
         $message              = "Agent Created";
         $response['status']   = $status;

@@ -171,6 +171,46 @@ class Booking
         return $stmt;
     }
 
+    // get agent bookings for the current month
+    public function read_agent()
+    {
+        $status = "cancelled";
+
+        try {
+            $this->con->beginTransaction();
+
+            //create the query
+            $query = "SELECT b.id, b.booking_no, c.first_name AS c_fname, c.last_name AS c_lname, v.model, v.make, v.number_plate, v.category_id, b.start_date, b.end_date, b.status FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id WHERE b.account_id = ? AND MONTH(b.start_date) = MONTH(CURDATE()) AND YEAR(b.start_date) = YEAR(CURDATE()) ORDER BY b.created_at DESC";
+            $stmt  = $this->con->prepare($query);
+            $stmt->execute([$this->account_id]);
+            $this->con->commit();
+        } catch (Exception $e) {
+            $this->con->rollback();
+        }
+
+        return $stmt;
+    }
+
+    // get completed agent bookings for the current month
+    public function read_agent_complete()
+    {
+        $status = "complete";
+
+        try {
+            $this->con->beginTransaction();
+
+            //create the query
+            $query = "SELECT b.id, b.booking_no, c.first_name AS c_fname, c.last_name AS c_lname, v.model, v.make, v.number_plate, v.category_id, b.start_date, b.end_date, b.status, b.total FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id WHERE b.account_id = ? AND b.status = ? AND MONTH(b.start_date) = MONTH(CURDATE()) AND YEAR(b.start_date) = YEAR(CURDATE()) ORDER BY b.created_at DESC";
+            $stmt  = $this->con->prepare($query);
+            $stmt->execute([$this->account_id, $status]);
+            $this->con->commit();
+        } catch (Exception $e) {
+            $this->con->rollback();
+        }
+
+        return $stmt;
+    }
+
     public function create_booking()
     {
         $status = "upcoming";
@@ -352,7 +392,7 @@ class Booking
 
         $sql  = "UPDATE bookings SET vehicle_id = ?, customer_id = ?, driver_id = ?, start_date = ?, end_date = ?, start_time = ?, end_time = ?, custom_rate = ?, total = ? WHERE id = ?";
         $stmt = $this->con->prepare($sql);
-        if ($stmt->execute([$this->vehicle_id, $this->c_id, $this->d_id, $this->start_date, $this->end_date, $this->start_time, $this->end_time, $this->custom_rate, $total, $this->id])) {
+        if ($stmt->execute([$this->vehicle_id, $this->c_id, $this->d_id, $this->start_date, $this->end_date, $this->start_time, $this->end_time, $this->custom_rate, $this->total, $this->id])) {
             $this->id = $this->con->lastInsertId();
             return true;
         } else {
