@@ -27,6 +27,20 @@ class Account
         $this->con = $db;
     }
 
+    public function update_password()
+    {
+        $sql  = "UPDATE accounts SET password = ? WHERE id = ?";
+        $stmt = $this->con->prepare($sql);
+        if ($stmt->execute([$this->hashed_password, $this->id])) {
+            return true;
+        } else {
+            // print error if something goes wrong
+            printf("Error :  % s . \n ", $stmt->error);
+            return false;
+        }
+
+    }
+
     // this function fetches the account for login purposes. It ensures that the account exists with the given email
     public function fetch_account()
     {
