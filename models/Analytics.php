@@ -88,7 +88,7 @@ class Analytics
 
         $sql  = "SELECT v.model, v.make, v.number_plate, sum(b.total) AS Income FROM vehicle_basics v INNER JOIN bookings b ON v.id = b.vehicle_id WHERE b.status != ? GROUP BY v.id ORDER BY Income DESC LIMIT 1";
         $stmt = $this->con->prepare($sql);
-        $stmt->execute();
+        $stmt->execute([$status]);
         $row = $stmt->fetch();
 
         $this->make         = $row['make'];
@@ -104,7 +104,7 @@ class Analytics
 
         $sql  = "SELECT v.model, v.make, v.number_plate, count(v.id) AS total FROM vehicle_basics v INNER JOIN bookings b ON v.id = b.vehicle_id WHERE b.status != ? GROUP BY v.id ORDER BY total DESC LIMIT 1";
         $stmt = $this->con->prepare($sql);
-        $stmt->execute();
+        $stmt->execute([$status]);
         $row = $stmt->fetch();
 
         $this->make         = $row['make'];
@@ -118,11 +118,33 @@ class Analytics
         $status = "cancelled";
         $sql    = "SELECT v.id, v.make, v.model, v.number_plate, sum(b.total) AS total, (SELECT daily_rate FROM vehicle_pricing vp WHERE vp.vehicle_id = v.id) AS daily_rate, sum(b.total) / 180 AS ADR FROM bookings b INNER JOIN vehicle_basics v ON b.vehicle_id = v.id WHERE b.status != ? group by v.id";
         $stmt   = $this->con->prepare($sql);
-        $stmt->execute();
+        $stmt->execute([$status]);
 
         return $stmt;
     }
 
     // VEHICLE MONTH STATS
+    public function month_vehicle_totals()
+    {
+        $date   = $this->year . '-' . $this->month . '-' . '01';
+        $status = "cancelled";
+        $sql    = "SELECT
+                        vb.make,
+                        vb.model,
+                        vb.number_plate,
+                        COALESCE(SUM(b.total), 0) AS aggregated_total
+                   FROM
+                        vehicle_basics vb
+                   LEFT JOIN
+                        bookings b ON vb.id = b.vehicle_id
+                                   AND b.start_date >= ?
+                                   AND b.start_date < ? + INTERVAL 1 MONTH
+                                   AND b.status != ?
+                   GROUP BY
+                        vb.make, vb.model, vb.number_plate;";
+        $stmt = $this->con->prepare($sql);
+        $stmt->execute([$date, $date, $status]);
 
+        return $stmt;
+    }
 }
