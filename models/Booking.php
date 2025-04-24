@@ -320,7 +320,7 @@ class Booking
         $sql  = "UPDATE bookings SET end_date = ?, total = ? WHERE id = ?";
         $stmt = $this->con->prepare($sql);
 
-        if ($stmt->execute([$this->end_date, this->total, $this->id])) {
+        if ($stmt->execute([$this->end_date, $this->total, $this->id])) {
             // $this->id = $this->con->lastInsertId();
             return true;
         } else {
@@ -335,7 +335,7 @@ class Booking
     {
         $sql  = "SELECT start_date FROM bookings WHERE id = ? LIMIT 0,1";
         $stmt = $this->con->prepare($sql);
-        $stmt->execute();
+        $stmt->execute([$this->id]);
 
         $row              = $stmt->fetch(PDO::FETCH_ASSOC);
         $this->start_date = $row['start_date'];
@@ -346,7 +346,7 @@ class Booking
     {
         $sql  = "SELECT custom_rate FROM bookings WHERE id = ? LIMIT 0,1";
         $stmt = $this->con->prepare($sql);
-        $stmt->execute();
+        $stmt->execute([$this->id]);
 
         $row               = $stmt->fetch(PDO::FETCH_ASSOC);
         $this->custom_rate = $row['custom_rate'];
@@ -357,7 +357,7 @@ class Booking
     {
         $sql  = "SELECT vehicle_id FROM bookings WHERE id = ? LIMIT 0,1";
         $stmt = $this->con->prepare($sql);
-        $stmt->execute();
+        $stmt->execute([$this->id]);
 
         $row              = $stmt->fetch(PDO::FETCH_ASSOC);
         $this->vehicle_id = $row['vehicle_id'];
