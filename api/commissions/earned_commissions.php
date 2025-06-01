@@ -82,7 +82,7 @@ if ($num > 0) {
     echo json_encode($response);
 } else {
     // No posts found in the database ($num = 0)
-    $message             = "Agent has no bookings";
+    $message             = "Agent has no earnings";
     $status              = "Error";
     $response['message'] = $message;
     $response['status']  = $status;
