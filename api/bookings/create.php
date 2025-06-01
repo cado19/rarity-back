@@ -98,7 +98,7 @@ if (! empty($data->custom_rate)) {
         echo json_encode($response);
     } else {
         // here is where we can check the driver_id of the booking and proceed if it's not SELF DRIVE. We can get their rates in nairobi and out nairobi and assign a variable.
-        if ($data->driver_id == 7) {
+        if ($data->driver_id == 8) {
             $booking->driver_fee = 0;
         } else {
             $driver->get_rate();
