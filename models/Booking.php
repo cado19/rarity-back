@@ -31,6 +31,9 @@ class Booking
     public $account_id; // user id of the person who created the booking
     public $group;      // this text is used for the gantt chart in the front end
     public $title;
+    public $in_capital;
+    public $out_capital;
+    public $driver_fee;
     public $created_at;
 
     // Constructor with DB
@@ -214,9 +217,9 @@ class Booking
     public function create_booking()
     {
         $status = "upcoming";
-        $sql    = "INSERT INTO bookings (customer_id, vehicle_id, driver_id, start_date, end_date, start_time, end_time, custom_rate, total, account_id, status) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
+        $sql    = "INSERT INTO bookings (customer_id, vehicle_id, driver_id, start_date, end_date, start_time, end_time, custom_rate, total, account_id, status, in_capital, out_capital, driver_fee) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         $stmt   = $this->con->prepare($sql);
-        if ($stmt->execute([$this->c_id, $this->vehicle_id, $this->d_id, $this->start_date, $this->end_date, $this->start_time, $this->end_time, $this->custom_rate, $this->total, $this->account_id, $status])) {
+        if ($stmt->execute([$this->c_id, $this->vehicle_id, $this->d_id, $this->start_date, $this->end_date, $this->start_time, $this->end_time, $this->custom_rate, $this->total, $this->account_id, $status, $this->in_capital, $this->out_capital, $this->driver_fee])) {
             $this->id = $this->con->lastInsertId();
             return true;
         } else {
@@ -230,9 +233,9 @@ class Booking
     public function create_custom_booking()
     {
         $status = "upcoming";
-        $sql    = "INSERT INTO bookings (customer_id, vehicle_id, driver_id, start_date, end_date, start_time, end_time, custom_rate, total, account_id, status) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
+        $sql    = "INSERT INTO bookings (customer_id, vehicle_id, driver_id, start_date, end_date, start_time, end_time, custom_rate, total, account_id, status, in_capital, out_capital, driver_fee) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         $stmt   = $this->con->prepare($sql);
-        if ($stmt->execute([$this->c_id, $this->vehicle_id, $this->d_id, $this->start_date, $this->end_date, $this->start_time, $this->end_time, $this->custom_rate, $this->total, $this->account_id, $status])) {
+        if ($stmt->execute([$this->c_id, $this->vehicle_id, $this->d_id, $this->start_date, $this->end_date, $this->start_time, $this->end_time, $this->custom_rate, $this->total, $this->account_id, $status, $this->in_capital, $this->out_capital, $this->driver_fee])) {
             $this->id = $this->con->lastInsertId();
             return true;
         } else {

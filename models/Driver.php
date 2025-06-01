@@ -18,6 +18,9 @@ class Driver
     public $dl_no;
     public $dl_expiry;
     public $date_of_birth;
+    public $location;         // in capital or out capital
+    public $rate_in_capital;  // for rate inside capital or outside capital
+    public $rate_out_capital; // for rate outside capital or outside capital
     public $id_image;
     public $id_back_image;
     public $profile_image;
@@ -105,5 +108,30 @@ class Driver
             return false;
         }
 
+    }
+
+    public function update_rate()
+    {
+        $sql  = "UPDATE drivers SET $this->location = ? WHERE id = ?";
+        $stmt = $this->con->prepare($sql);
+        if ($stmt->execute([$this->rate, $this->id])) {
+            return true;
+        } else {
+            // print error if something goes wrong
+            printf("Error :  % s . \n ", $stmt->error);
+            return false;
+        }
+
+    }
+
+    public function get_rate()
+    {
+        $sql  = "SELECT rate_in_capital, rate_out_capital FROM drivers WHERE id = ?";
+        $stmt = $this->con->prepare($sql);
+        $stmt->execute([$this->id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        $this->rate_in_capital  = $row['rate_in_capital'];
+        $this->rate_out_capital = $row['rate_out_capital'];
     }
 }

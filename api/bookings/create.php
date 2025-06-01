@@ -1,6 +1,9 @@
 <?php
 // THIS FILE WILL SAVE A BOOKING FROM EXTERNAL REQUESTS TO THE DATABASE
 
+// SELF DRIVE ID IN DEV = 7
+// SELF DRIVE ID IN PROD = 8
+
 // Headers
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json');
@@ -18,6 +21,7 @@ include_once '../../models/Booking.php';
 include_once '../../models/Account.php';
 include_once '../../models/Fleet.php';
 include_once '../../models/Contract.php';
+include_once '../../models/Driver.php';
 
 // Instantiate The DB and connect to it
 $database = new Database();
@@ -27,6 +31,7 @@ $booking  = new Booking($db);
 $account  = new Account($db);
 $fleet    = new Fleet($db);
 $contract = new Contract($db);
+$driver   = new Driver($db);
 
 // 1. get the custom rate or check if it is 0
 // 2. if custom rate is greater than 0, get the vehicle's category_id
@@ -38,20 +43,25 @@ $contract = new Contract($db);
 $data = json_decode(file_get_contents('php://input'));
 
 // properties of booking class
-$booking->c_id       = $data->customer_id;
-$booking->vehicle_id = $data->vehicle_id;
-$booking->d_id       = $data->driver_id;
-$booking->start_date = $data->start_date;
-$booking->end_date   = $data->end_date;
-$booking->start_time = $data->start_time;
-$booking->end_time   = $data->end_time;
-$booking->account_id = $data->account_id;
+$booking->c_id        = $data->customer_id;
+$booking->vehicle_id  = $data->vehicle_id;
+$booking->d_id        = $data->driver_id;
+$booking->start_date  = $data->start_date;
+$booking->end_date    = $data->end_date;
+$booking->start_time  = $data->start_time;
+$booking->end_time    = $data->end_time;
+$booking->account_id  = $data->account_id;
+$booking->in_capital  = $data->in_capital;
+$booking->out_capital = $data->out_capital;
 
 // properties of fleet class
 $fleet->id = $data->vehicle_id;
 
 // properties of account class
 $account->id = $data->account_id;
+
+// properties of driver class
+$driver->id = $data->driver_id;
 
 // get the duration of the booking
 $start_date = strtotime($data->start_date);
@@ -87,6 +97,17 @@ if (! empty($data->custom_rate)) {
         array_push($response, $message);
         echo json_encode($response);
     } else {
+        // here is where we can check the driver_id of the booking and proceed if it's not SELF DRIVE. We can get their rates in nairobi and out nairobi and assign a variable.
+        if ($data->driver_id == 7) {
+            $booking->driver_fee = 0;
+        } else {
+            $driver->get_rate();
+            $in_capital_total    = $data->in_capital * $driver->rate_in_capital;
+            $out_capital_total   = $data->out_capital * $driver->rate_out_capital;
+            $booking->driver_fee = $in_capital + $out_capital;
+        }
+        // we then multiply the in nairobi rate with the in number of in nairobi days
+        // we then multiply the out nairobi rate with the in number of out nairobi days
         $total                = $data->custom_rate * $duration;
         $booking->total       = $total;
         $booking->custom_rate = $data->custom_rate;
@@ -121,6 +142,17 @@ if (! empty($data->custom_rate)) {
     $fleet->get_daily_rate();
     $booking->total       = $fleet->daily_rate * $duration;
     $booking->custom_rate = 0;
+    // here is where we can check the driver_id of the booking and proceed if it's not SELF DRIVE. We can get their rates in nairobi and out nairobi and assign a variable.
+    if ($data->driver_id == 7) {
+        $booking->driver_fee = 0;
+    } else {
+        $driver->get_rate();
+        $in_capital_total    = $data->in_capital * $driver->rate_in_capital;
+        $out_capital_total   = $data->out_capital * $driver->rate_out_capital;
+        $booking->driver_fee = $in_capital_total + $out_capital_total;
+    }
+    // we then multiply the in nairobi rate with the in number of in nairobi days
+    // we then multiply the out nairobi rate with the in number of out nairobi days
     if ($booking->create_booking()) {
         $no                  = "B-" . str_pad($booking->id, 3, "0", STR_PAD_LEFT);
         $booking->booking_no = $no;
