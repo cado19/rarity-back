@@ -48,6 +48,7 @@ $booking_arr = [
     'make'         => $booking->make,
     'model'        => $booking->model,
     'number_plate' => $booking->number_plate,
+    'agent'        => $booking->agent,
 ];
 $status  = "Success";
 $message = "Successfully retrieved booking";
