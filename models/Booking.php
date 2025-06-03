@@ -35,6 +35,7 @@ class Booking
     public $in_capital;
     public $out_capital;
     public $driver_fee;
+    public $fuel;
     public $created_at;
 
     // Constructor with DB
@@ -47,7 +48,7 @@ class Booking
     // get single booking
     public function read_single()
     {
-        $sql  = "SELECT a.name AS agent, c.id AS customer_id, c.first_name AS customer_first_name, c.last_name AS customer_last_name, v.id AS vehicle_id, v.model, v.make, v.number_plate, v.drive_train, cat.name AS category, v.seats, vp.daily_rate,d.id AS d_id, d.first_name AS driver_first_name, d.last_name AS driver_last_name, b.start_date, b.end_date, b.start_time, b.end_time, b.total, b.status, b.booking_no, b.custom_rate, ct.status AS signature_status FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN accounts a ON b.account_id = a.id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id INNER JOIN vehicle_pricing vp ON b.vehicle_id = vp.vehicle_id INNER JOIN contracts ct ON b.id = ct.booking_id INNER JOIN vehicle_categories cat ON v.category_id = cat.id INNER JOIN drivers d ON b.driver_id = d.id WHERE b.id = ?";
+        $sql  = "SELECT a.name AS agent, c.id AS customer_id, c.first_name AS customer_first_name, c.last_name AS customer_last_name, v.id AS vehicle_id, v.model, v.make, v.number_plate, v.drive_train, cat.name AS category, v.seats, vp.daily_rate,d.id AS d_id, d.first_name AS driver_first_name, d.last_name AS driver_last_name, b.start_date, b.end_date, b.start_time, b.end_time, b.total, b.driver_fee, b.in_capital, b.out_capital, b.status, b.booking_no, b.custom_rate, ct.status AS signature_status FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN accounts a ON b.account_id = a.id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id INNER JOIN vehicle_pricing vp ON b.vehicle_id = vp.vehicle_id INNER JOIN contracts ct ON b.id = ct.booking_id INNER JOIN vehicle_categories cat ON v.category_id = cat.id INNER JOIN drivers d ON b.driver_id = d.id WHERE b.id = ?";
         $stmt = $this->con->prepare($sql);
         $stmt->execute([$this->id]);
 
@@ -65,6 +66,9 @@ class Booking
         $this->end_date     = $row['end_date'];
         $this->start_time   = $row['start_time'];
         $this->end_time     = $row['end_time'];
+        $this->driver_fee   = $row['driver_fee'];
+        $this->in_capital   = $row['in_capital'];
+        $this->out_capital  = $row['out_capital'];
         $this->status       = $row['status'];
         $this->custom_rate  = $row['custom_rate'];
         $this->daily_rate   = $row['daily_rate'];
@@ -347,6 +351,21 @@ class Booking
         $stmt = $this->con->prepare($sql);
 
         if ($stmt->execute([$this->end_date, $this->total, $this->id])) {
+            // $this->id = $this->con->lastInsertId();
+            return true;
+        } else {
+            // print error if something goes wrong
+            printf("Error :  % s . \n ", $stmt->error);
+            return false;
+        }
+    }
+
+    public function update_fuel()
+    {
+        $sql  = "UPDATE bookings SET fuel = ? WHERE id = ?";
+        $stmt = $this->con->prepare($sql);
+
+        if ($stmt->execute([$this->fuel, $this->id])) {
             // $this->id = $this->con->lastInsertId();
             return true;
         } else {
