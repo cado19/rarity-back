@@ -70,14 +70,16 @@ class Driver
 
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $this->first_name    = $row['first_name'];
-        $this->last_name     = $row['last_name'];
-        $this->email         = $row['email'];
-        $this->dl_no         = $row['dl_no'];
-        $this->id_no         = $row['id_no'];
-        $this->phone_no      = $row['phone_no'];
-        $this->dl_expiry     = $row['dl_expiration_date'];
-        $this->date_of_birth = $row['date_of_birth'];
+        $this->first_name       = $row['first_name'];
+        $this->last_name        = $row['last_name'];
+        $this->email            = $row['email'];
+        $this->dl_no            = $row['dl_no'];
+        $this->id_no            = $row['id_no'];
+        $this->phone_no         = $row['phone_no'];
+        $this->rate_in_capital  = $row['rate_in_capital'];
+        $this->rate_out_capital = $row['rate_out_capital'];
+        $this->dl_expiry        = $row['dl_expiration_date'];
+        $this->date_of_birth    = $row['date_of_birth'];
     }
 
     public function check_unique_email()
@@ -133,5 +135,14 @@ class Driver
 
         $this->rate_in_capital  = $row['rate_in_capital'];
         $this->rate_out_capital = $row['rate_out_capital'];
+    }
+
+    public function workplan_drivers()
+    {
+        $sql  = "SELECT id, CONCAT(first_name, ' ', last_name) AS title FROM drivers";
+        $stmt = $this->con->prepare($sql);
+        $stmt->execute();
+
+        return $stmt;
     }
 }

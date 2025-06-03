@@ -31,6 +31,7 @@ class Booking
     public $account_id; // user id of the person who created the booking
     public $group;      // this text is used for the gantt chart in the front end
     public $title;
+    public $agent;
     public $in_capital;
     public $out_capital;
     public $driver_fee;
@@ -46,7 +47,7 @@ class Booking
     // get single booking
     public function read_single()
     {
-        $sql  = "SELECT c.id AS customer_id, c.first_name AS customer_first_name, c.last_name AS customer_last_name, v.id AS vehicle_id, v.model, v.make, v.number_plate, v.drive_train, cat.name AS category, v.seats, vp.daily_rate,d.id AS d_id, d.first_name AS driver_first_name, d.last_name AS driver_last_name, b.start_date, b.end_date, b.start_time, b.end_time, b.total, b.status, b.booking_no, b.custom_rate, ct.status AS signature_status FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id INNER JOIN vehicle_pricing vp ON b.vehicle_id = vp.vehicle_id INNER JOIN contracts ct ON b.id = ct.booking_id INNER JOIN vehicle_categories cat ON v.category_id = cat.id INNER JOIN drivers d ON b.driver_id = d.id WHERE b.id = ?";
+        $sql  = "SELECT a.name AS agent, c.id AS customer_id, c.first_name AS customer_first_name, c.last_name AS customer_last_name, v.id AS vehicle_id, v.model, v.make, v.number_plate, v.drive_train, cat.name AS category, v.seats, vp.daily_rate,d.id AS d_id, d.first_name AS driver_first_name, d.last_name AS driver_last_name, b.start_date, b.end_date, b.start_time, b.end_time, b.total, b.status, b.booking_no, b.custom_rate, ct.status AS signature_status FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN accounts a ON b.account_id = a.id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id INNER JOIN vehicle_pricing vp ON b.vehicle_id = vp.vehicle_id INNER JOIN contracts ct ON b.id = ct.booking_id INNER JOIN vehicle_categories cat ON v.category_id = cat.id INNER JOIN drivers d ON b.driver_id = d.id WHERE b.id = ?";
         $stmt = $this->con->prepare($sql);
         $stmt->execute([$this->id]);
 
@@ -72,6 +73,7 @@ class Booking
         $this->model        = $row['model'];
         $this->number_plate = $row['number_plate'];
         $this->ct_status    = $row['signature_status'];
+        $this->agent        = $row['agent'];
     }
 
     // get all bookings
@@ -214,6 +216,17 @@ class Booking
         return $stmt;
     }
 
+    // get upcoming driver bookings
+    public function upcoming_driver_bookings()
+    {
+        $status = "upcoming";
+
+        $sql  = "SELECT b.booking_no, b.start_date, b.end_date, v.make, v.model, v.number_plate FROM bookings b INNER JOIN vehicle_basics v ON b.vehicle_id = v.id WHERE b.driver_id = ? AND b.status = ?";
+        $stmt = $this->con->prepare($sql);
+        $stmt->execute([$this->d_id, $status]);
+        return $stmt;
+    }
+
     public function create_booking()
     {
         $status = "upcoming";
@@ -263,6 +276,16 @@ class Booking
     public function booking_workplan()
     {
         $sql = "SELECT b.id, CONCAT(b.booking_no, ' ', c.first_name, ' ', c.last_name) AS title, b.start_date AS start_time, b.end_date AS end_time, b.vehicle_id AS 'group', b.status FROM bookings b INNER JOIN customer_details c ON b.customer_id = c.id";
+
+        $stmt = $this->con->prepare($sql);
+        $stmt->execute();
+
+        return $stmt;
+    }
+
+    public function driver_booking_workplan()
+    {
+        $sql = "SELECT b.id, CONCAT(b.booking_no, ' ', c.first_name, ' ', c.last_name) AS title, b.start_date AS start_time, b.end_date AS end_time, b.driver_id AS 'group', b.status FROM bookings b INNER JOIN customer_details c ON b.customer_id = c.id";
 
         $stmt = $this->con->prepare($sql);
         $stmt->execute();
