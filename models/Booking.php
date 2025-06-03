@@ -246,7 +246,7 @@ class Booking
     public function create_custom_booking()
     {
         $status = "upcoming";
-        $sql    = "INSERT INTO bookings (customer_id, vehicle_id, driver_id, start_date, end_date, start_time, end_time, custom_rate, total, account_id, status, in_capital, out_capital, driver_fee) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        $sql    = "INSERT INTO bookings (customer_id, vehicle_id, driver_id, start_date, end_date, start_time, end_time, custom_rate, total, account_id, status, in_capital, out_capital, driver_fee) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         $stmt   = $this->con->prepare($sql);
         if ($stmt->execute([$this->c_id, $this->vehicle_id, $this->d_id, $this->start_date, $this->end_date, $this->start_time, $this->end_time, $this->custom_rate, $this->total, $this->account_id, $status, $this->in_capital, $this->out_capital, $this->driver_fee])) {
             $this->id = $this->con->lastInsertId();

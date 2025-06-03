@@ -104,7 +104,7 @@ if (! empty($data->custom_rate)) {
             $driver->get_rate();
             $in_capital_total    = $data->in_capital * $driver->rate_in_capital;
             $out_capital_total   = $data->out_capital * $driver->rate_out_capital;
-            $booking->driver_fee = $in_capital + $out_capital;
+            $booking->driver_fee = $in_capital_total + $out_capital_total;
         }
         // we then multiply the in nairobi rate with the in number of in nairobi days
         // we then multiply the out nairobi rate with the in number of out nairobi days
