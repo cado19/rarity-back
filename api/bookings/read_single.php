@@ -44,6 +44,7 @@ $booking_arr = [
     'in_capital'   => $booking->in_capital,
     'out_capital'  => $booking->out_capital,
     'driver_fee'   => $booking->driver_fee,
+    'fuel'         => $booking->fuel,
     'ct_status'    => $booking->ct_status,
     'daily_rate'   => $booking->daily_rate,
     'custom_rate'  => $booking->custom_rate,
