@@ -91,10 +91,12 @@ if (! empty($data->custom_rate)) {
         array_push($response, $message);
         echo json_encode($response);
     } elseif ($data->custom_rate < $account->agent_rate) {
-        $message = "Set amount is too low. Min for selected vehicle: $account->agent_rate";
-        $status  = "Error";
-        array_push($response, $status);
-        array_push($response, $message);
+        $message             = "Set amount is too low. Min for selected vehicle: $account->agent_rate";
+        $status              = "Error";
+        $response['status']  = $status;
+        $response['message'] = $message;
+        // array_push($response, $status);
+        // array_push($response, $message);
         echo json_encode($response);
     } else {
         // here is where we can check the driver_id of the booking and proceed if it's not SELF DRIVE. We can get their rates in nairobi and out nairobi and assign a variable.
