@@ -215,7 +215,7 @@ class Fleet
     public function read_issues()
     {
         $sql  = "SELECT vb.make, vb.model, vb.number_plate, vi.title, vi.resolution_cost, vi.status FROM vehicle_issues vi INNER JOIN vehicle_basics vb ON vi.vehicle_id = vb.id ORDER BY created_at DESC";
-        $stmt = $this->con->prepare($query);
+        $stmt = $this->con->prepare($sql);
         $stmt->execute();
 
         return $stmt;
@@ -224,8 +224,22 @@ class Fleet
     public function read_issue()
     {
         $sql  = "SELECT vb.make, vb.model, vb.number_plate, vi.title, vi.resolution_cost, vi.status FROM vehicle_issues vi INNER JOIN vehicle_basics vb ON vi.vehicle_id = vb.id WHERE vi.id = ? ORDER BY created_at DESC";
-        $stmt = $this->con->prepare($query);
+        $stmt = $this->con->prepare($sql);
         $stmt->execute([$this->issue_id]);
+    }
+
+    public function update_rate()
+    {
+        $sql  = "UPDATE vehicle_pricing SET daily_rate = ? WHERE vehicle_id = ?";
+        $stmt = $this->con->prepare($sql);
+        if ($stmt->execute([$this->daily_rate, $this->id])) {
+            return true;
+        } else {
+            // print error if something goes wrong
+            printf("Error: %s.\n", $stmt->error);
+            return false;
+        }
+
     }
 
 }
