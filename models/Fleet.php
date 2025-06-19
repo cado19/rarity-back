@@ -241,5 +241,43 @@ class Fleet
         }
 
     }
+    // count the total number of vehicles
+    public function vehicle_count()
+    {
+        $sql  = "SELECT id FROM vehicle_basics";
+        $stmt = $this->con->prepare($sql);
+        $stmt->execute();
+        return $stmt;
+    }
+
+    //count the total number of vehicles actively out there (active booking)
+    public function active_vehicles()
+    {
+        $status = "active";
+        $sql    = "SELECT vehicle_id FROM bookings WHERE status = ?";
+        $stmt   = $this->con->prepare($sql);
+        $stmt->execute([$status]);
+        return $stmt;
+
+    }
+    //count the total number of vehicles reserved  (upcoming booking)
+    public function reserved_vehicles()
+    {
+        $status = "upcoming";
+        $sql    = "SELECT vehicle_id FROM bookings WHERE status = ?";
+        $stmt   = $this->con->prepare($sql);
+        $stmt->execute([$status]);
+        return $stmt;
+
+    }
+
+    //get bookings ending today
+    public function due_out_count()
+    {
+        $sql  = "SELECT id FROM bookings WHERE DATE(end_date) = CURRENT_DATE";
+        $stmt = $this->con->prepare($sql);
+        $stmt->execute();
+        return $stmt;
+    }
 
 }
