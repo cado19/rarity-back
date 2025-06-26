@@ -280,4 +280,13 @@ class Fleet
         return $stmt;
     }
 
+    // get all vehicle ids in a given category
+    public function vehicles_in_category()
+    {
+        $sql  = "SELECT id FROM vehicle_basics WHERE category_id = ?";
+        $stmt = $this->con->prepare($sql);
+        $stmt->execute([$this->category_id]);
+        return $stmt;
+    }
+
 }
