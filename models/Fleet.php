@@ -24,6 +24,7 @@ class Fleet
     public $resolution_cost;
     public $resolution_date;
     public $title; // to be used in getting vehicle make, model, number plate for calendar
+    public $deleted;
     public $created_at;
 
     // Constructor with DB
@@ -54,7 +55,7 @@ class Fleet
     public function read_single()
     {
         //create the query
-        $query = "SELECT vb.make, vb.model, vb.number_plate, cat.name as category_name, cat.id AS category_id, vb.drive_train, vb.seats, vb.fuel, vb.transmission, vb.image, vp.daily_rate, vp.vehicle_excess, vp.refundable_security_deposit, vp.monthly_target FROM vehicle_basics vb INNER JOIN vehicle_pricing vp ON vb.id = vp.vehicle_id INNER JOIN vehicle_categories cat ON vb.category_id = cat.id WHERE vb.id = ? LIMIT 0,1";
+        $query = "SELECT vb.make, vb.model, vb.number_plate, cat.name as category_name, cat.id AS category_id, vb.drive_train, vb.seats, vb.fuel, vb.transmission, vb.image, vb.deleted, vp.daily_rate, vp.vehicle_excess, vp.refundable_security_deposit, vp.monthly_target FROM vehicle_basics vb INNER JOIN vehicle_pricing vp ON vb.id = vp.vehicle_id INNER JOIN vehicle_categories cat ON vb.category_id = cat.id WHERE vb.id = ? LIMIT 0,1";
 
         // prepare statement
         $stmt = $this->con->prepare($query);
@@ -77,6 +78,7 @@ class Fleet
         $this->vehicle_excess = $row['vehicle_excess'];
         $this->daily_rate     = $row['daily_rate'];
         $this->fuel           = $row['fuel'];
+        $this->deleted        = $row['deleted'];
 
         // return $stmt;
     }
@@ -269,6 +271,45 @@ class Fleet
         $stmt->execute([$status]);
         return $stmt;
 
+    }
+
+    // function to delete a vehicle
+    public function delete_vehicle()
+    {
+        $deleted = "true";
+        $sql     = "UPDATE vehicle_basics SET deleted = ? WHERE id = ?";
+        $stmt    = $this->con->prepare($sql);
+        if ($stmt->execute([$deleted, $this->id])) {
+            return true;
+        } else {
+            // print error if something goes wrong
+            printf("Error: %s.\n", $stmt->error);
+            return false;
+        }
+    }
+
+    // function to delete a vehicle
+    public function restore_vehicle()
+    {
+        $deleted = "false";
+        $sql     = "UPDATE vehicle_basics SET deleted = ? WHERE id = ?";
+        $stmt    = $this->con->prepare($sql);
+        if ($stmt->execute([$deleted, $this->id])) {
+            return true;
+        } else {
+            // print error if something goes wrong
+            printf("Error: %s.\n", $stmt->error);
+            return false;
+        }
+    }
+
+    public function deleted_vehicles()
+    {
+        $deleted = "true";
+        $sql     = "SELECT c.name AS category_name, v.id, v.category_id, v.make, v.model, v.number_plate, v.created_at, vp.daily_rate FROM vehicle_basics v INNER JOIN vehicle_categories c ON v.category_id = c.id INNER JOIN vehicle_pricing vp ON v.id = vp.vehicle_id WHERE v.deleted = ?";
+        $stmt    = $this->con->prepare($sql);
+        $stmt->execute([$deleted]);
+        return $stmt;
     }
 
     //get bookings ending today
