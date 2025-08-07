@@ -29,20 +29,22 @@ $customer->read_single();
 
 // create the array
 $customer_arr = [
-    'id'                    => $customer->id,
-    'first_name'            => $customer->first_name,
-    'last_name'             => $customer->last_name,
-    'email'                 => $customer->email,
-    'id_no'                 => $customer->id_no,
-    'phone_no'              => $customer->phone_no,
-    'dl_expiry'             => $customer->dl_expiry,
-    'residential_address'   => $customer->residential_address,
-    'work_address'          => $customer->work_address,
-    'date_of_birth'         => $customer->date_of_birth,
-    'id_image'              => $customer->id_image,
-    'id_back_image'         => $customer->id_back_image,
-    'profile_image'         => $customer->profile_image,
-    'license_image'         => $customer->license_image
+    'id'                  => $customer->id,
+    'first_name'          => $customer->first_name,
+    'last_name'           => $customer->last_name,
+    'email'               => $customer->email,
+    'id_type'             => $customer->id_type;
+    'id_no'               => $customer->id_no,
+    'phone_no'            => $customer->phone_no,
+    'dl_no'               => $customer->dl_no;
+    'dl_expiry'           => $customer->dl_expiry,
+    'residential_address' => $customer->residential_address,
+    'work_address'        => $customer->work_address,
+    'date_of_birth'       => $customer->date_of_birth,
+    'id_image'            => $customer->id_image,
+    'id_back_image'       => $customer->id_back_image,
+    'profile_image'       => $customer->profile_image,
+    'license_image'       => $customer->license_image,
 ];
 
 echo json_encode($customer_arr);

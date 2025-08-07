@@ -56,7 +56,7 @@ class Customer
         $status = "false";
 
         //create the query
-        $query = "SELECT id, first_name, last_name, email, id_no, phone_no, dl_expiration, residential_address, work_address, date_of_birth, id_image, id_back_image, profile_image, license_image FROM customer_details WHERE deleted =  ? and id = ? LIMIT 0, 1";
+        $query = "SELECT id, first_name, last_name, email, id_type, id_no, phone_no, dl_no, dl_expiration, residential_address, work_address, date_of_birth, id_image, id_back_image, profile_image, license_image FROM customer_details WHERE deleted =  ? and id = ? LIMIT 0, 1";
 
         // prepare statement
         $stmt = $this->con->prepare($query);
@@ -71,8 +71,10 @@ class Customer
         $this->first_name          = $row['first_name'];
         $this->last_name           = $row['last_name'];
         $this->email               = $row['email'];
+        $this->id_type             = $row['id_type'];
         $this->id_no               = $row['id_no'];
         $this->phone_no            = $row['phone_no'];
+        $this->dl_no               = $row['dl_no'];
         $this->dl_expiry           = $row['dl_expiration'];
         $this->residential_address = $row['residential_address'];
         $this->work_address        = $row['work_address'];
