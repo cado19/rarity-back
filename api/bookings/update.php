@@ -47,13 +47,13 @@ $booking->start_date = $data->start_date;
 $booking->end_date   = $data->end_date;
 $booking->start_time = $data->start_time;
 $booking->end_time   = $data->end_time;
-$booking->account_id = $data->account_id;
+// $booking->account_id = $data->account_id;
 
 // properties of fleet class
 $fleet->id = $data->vehicle_id;
 
 // properties of account class
-$account->id = $data->account_id;
+// $account->id = $data->account_id;
 
 // get the duration of the booking
 $start_date = strtotime($data->start_date);
