@@ -24,7 +24,10 @@ $result = $booking->read_cancelled();
 // get row count
 $num = $result->rowCount();
 
-//check if any posts
+// response array
+$response = [];
+
+//check if any cancelled bookings
 
 if ($num > 0) {
     $booking_arr             = [];
@@ -37,11 +40,9 @@ if ($num > 0) {
         $booking_item = [
             'id'           => $id,
             'booking_no'   => $booking_no,
-            'make'         => $make,
-            'model'        => $model,
+            'vehicle'      => $make . ' ' . $model,
             'number_plate' => $number_plate,
-            'c_fname'      => $c_fname,
-            'c_lname'      => $c_lname,
+            'client'       => $c_fname . ' ' . $c_lname,
             'start_date'   => $start_date,
             'end_date'     => $end_date,
         ];
@@ -50,12 +51,17 @@ if ($num > 0) {
         array_push($booking_arr['bookings'], $booking_item);
 
     }
-    // convert the posts to json
-    echo json_encode($booking_arr);
+    $message             = "Successfully fetched cancelled bookings";
+    $status              = "Success";
+    $response['data']    = $booking_arr['bookings'];
+    $response['message'] = $message;
+    $response['status']  = $status;
 } else {
-    // No posts found in the database ($num = 0)
-    $response = [
-        'messsage' => 'No posts found',
-    ];
-    echo json_encode($response);
+    // No cancelled bookings found in the database ($num = 0)
+    $message             = "No cancelled bookings in the database";
+    $status              = "Error";
+    $response['data']    = [];
+    $response['message'] = $message;
+    $response['status']  = $status;
 }
+echo json_encode($response);

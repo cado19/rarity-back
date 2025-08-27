@@ -1,8 +1,7 @@
 <?php
 // THIS FILE WILL SAVE A BOOKING FROM EXTERNAL REQUESTS TO THE DATABASE
 
-// SELF DRIVE ID IN DEV = 7
-// SELF DRIVE ID IN PROD = 8
+
 
 // Headers
 header('Access-Control-Allow-Origin: *');

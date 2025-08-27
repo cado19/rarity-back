@@ -54,13 +54,14 @@ if ($num > 0) {
     $response['message'] = $message;
     $response['status']  = $status;
     // convert the posts to json
-    echo json_encode($response);
 } else {
     // No posts found in the database ($num = 0)
     $message             = "No agents in the database";
     $status              = "Error";
+    $response['data']    = [];
     $response['message'] = $message;
     $response['status']  = $status;
 
-    echo json_encode($response);
 }
+
+echo json_encode($response);
