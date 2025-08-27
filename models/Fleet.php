@@ -24,6 +24,7 @@ class Fleet
     public $resolution_cost;
     public $resolution_date;
     public $title; // to be used in getting vehicle make, model, number plate for calendar
+    public $url;   // for getting and saving an image url
     public $deleted;
     public $created_at;
 
@@ -124,6 +125,23 @@ class Fleet
             printf("Error: %s.\n", $stmt->error);
             return false;
         }
+    }
+
+    public function save_image()
+    {
+        $sql = "INSERT INTO vehicle_images (url, vehicle_id) VALUES (?,?)";
+
+        // prepare the statement
+        $stmt = $this->con->prepare($sql);
+
+        if ($stmt->execute([$this->url, $this->id])) {
+            return true;
+        } else {
+            // print error if something goes wrong
+            printf("Error: %s.\n", $stmt->error);
+            return false;
+        }
+
     }
 
     public function check_unique_number_plate()
