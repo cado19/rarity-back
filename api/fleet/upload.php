@@ -23,11 +23,12 @@ $db       = $database->connect();
 
 $fleet = new Fleet($db);
 
-$targetDir  = "../../files/fleet/";
+$targetDir  = $_SERVER['DOCUMENT_ROOT'] . "/files/fleet/";
 $filename   = basename($_FILES["image"]["name"]);
 $safeName   = preg_replace("/[^a-zA-Z0-9\._-]/", "_", $filename);
-$targetFile = $targetDir . uniqid() . "_" . $safeName;
-$fleet->url = $safeName;
+$newName    = uniqid() . "_" . $safeName;
+$targetFile = $targetDir . $newName;
+$fleet->url = $newName;
 // $targetFile = $targetDir . basename($_FILES["image"]["name"]);
 $response = [];
 

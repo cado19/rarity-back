@@ -23,6 +23,13 @@ class Fleet
     public $issue_title;
     public $resolution_cost;
     public $resolution_date;
+    public $bluetooth;
+    public $keyless_entry;
+    public $gps;
+    public $reverse_cam;
+    public $audio_input;
+    public $sunroof;
+
     public $title; // to be used in getting vehicle make, model, number plate for calendar
     public $url;   // for getting and saving an image url
     public $deleted;
@@ -52,11 +59,85 @@ class Fleet
 
     }
 
+    public function read_catalog()
+    {
+        $status = "false";
+
+        //create the query
+        $query = "SELECT
+          vb.id,
+          vb.make,
+          vb.model,
+          vb.number_plate,
+          cat.name AS category_name,
+          cat.id AS category_id,
+          vb.drive_train,
+          vb.seats,
+          vb.fuel,
+          vb.transmission,
+          vb.image,
+          vb.deleted,
+          vp.daily_rate,
+          vp.vehicle_excess,
+          vp.refundable_security_deposit,
+          vp.monthly_target,
+          vi.url AS earliest_image_url
+        FROM vehicle_basics vb
+        INNER JOIN vehicle_pricing vp ON vb.id = vp.vehicle_id
+        INNER JOIN vehicle_categories cat ON vb.category_id = cat.id
+        LEFT JOIN (
+          SELECT vehicle_id, url
+          FROM vehicle_images
+          WHERE (vehicle_id, created_at) IN (
+            SELECT vehicle_id, MIN(created_at)
+            FROM vehicle_images
+            GROUP BY vehicle_id
+          )
+        ) vi ON vb.id = vi.vehicle_id WHERE vb.deleted = ?";
+
+        $stmt = $this->con->prepare($query);
+
+        //execuute the query
+        $stmt->execute([$status]);
+
+        return $stmt;
+    }
+
     // get single vehicle
     public function read_single()
     {
         //create the query
-        $query = "SELECT vb.make, vb.model, vb.number_plate, cat.name as category_name, cat.id AS category_id, vb.drive_train, vb.seats, vb.fuel, vb.transmission, vb.image, vb.deleted, vp.daily_rate, vp.vehicle_excess, vp.refundable_security_deposit, vp.monthly_target FROM vehicle_basics vb INNER JOIN vehicle_pricing vp ON vb.id = vp.vehicle_id INNER JOIN vehicle_categories cat ON vb.category_id = cat.id WHERE vb.id = ? LIMIT 0,1";
+        $query = "SELECT
+          vb.make,
+          vb.model,
+          vb.number_plate,
+          cat.name AS category_name,
+          cat.id AS category_id,
+          vb.drive_train,
+          vb.seats,
+          vb.fuel,
+          vb.transmission,
+          vb.image,
+          vb.deleted,
+          vp.daily_rate,
+          vp.vehicle_excess,
+          vp.refundable_security_deposit,
+          vp.monthly_target,
+          vi.url AS earliest_image_url
+        FROM vehicle_basics vb
+        INNER JOIN vehicle_pricing vp ON vb.id = vp.vehicle_id
+        INNER JOIN vehicle_categories cat ON vb.category_id = cat.id
+        LEFT JOIN (
+          SELECT vehicle_id, url
+          FROM vehicle_images
+          WHERE (vehicle_id, created_at) IN (
+            SELECT vehicle_id, MIN(created_at)
+            FROM vehicle_images
+            GROUP BY vehicle_id
+          )
+        ) vi ON vb.id = vi.vehicle_id
+        WHERE vb.id = ?
+        LIMIT 1";
 
         // prepare statement
         $stmt = $this->con->prepare($query);
@@ -79,6 +160,7 @@ class Fleet
         $this->vehicle_excess = $row['vehicle_excess'];
         $this->daily_rate     = $row['daily_rate'];
         $this->fuel           = $row['fuel'];
+        $this->url            = $row['earliest_image_url'];
         $this->deleted        = $row['deleted'];
 
         // return $stmt;
@@ -152,6 +234,33 @@ class Fleet
         $stmt->execute([$this->number_plate]);
         return $stmt;
 
+    }
+
+    public function get_vehicle_images()
+    {
+        $query = "SELECT id, url FROM vehicle_images WHERE vehicle_id = ? ORDER BY created_at DESC";
+        $stmt  = $this->con->prepare($query);
+        $stmt->execute([$this->id]);
+        return $stmt;
+    }
+
+    public function get_vehicle_extras()
+    {
+        $query = "SELECT id, bluetooth, keyless_entry, reverse_cam, audio_input, gps, sunroof FROM vehicle_extras WHERE vehicle_id = ? ORDER BY created_at DESC";
+        $stmt  = $this->con->prepare($query);
+        $stmt->execute([$this->id]);
+
+        //fetch the array
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        //set the properties
+        $this->id            = $row['id'];
+        $this->bluetooth     = $row['bluetooth'];
+        $this->keyless_entry = $row['keyless_entry'];
+        $this->reverse_cam   = $row['reverse_cam'];
+        $this->audio_input   = $row['audio_input'];
+        $this->gps           = $row['gps'];
+        $this->sunroof       = $row['sunroof'];
     }
 
     // function to retrieve all categories for saving a vehicle
