@@ -41,6 +41,7 @@ $fleet_arr = [
     'vehicle_excess' => $fleet->vehicle_excess,
     'transmission'   => $fleet->transmission,
     'fuel'           => $fleet->fuel,
+    'url'            => $fleet->url,
 
 ];
 
