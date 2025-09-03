@@ -56,7 +56,6 @@ if ($num > 0) {
     $response['data']    = $booking_arr['bookings'];
     $response['message'] = $message;
     $response['status']  = $status;
-    // convert the posts to json
 } else {
     // No bookings found in the database ($num = 0)
     $message             = "No bookings in the database";
