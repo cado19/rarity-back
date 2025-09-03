@@ -14,20 +14,36 @@ class Fleet
     public $seats;
     public $fuel;
     public $transmission;
-    public $daily_rate;
     public $category_id;
     public $colour;
-    public $category_name;
+    public $drive_train;
+    public $capacity;
+    public $cylinders;
+    public $horsepower;
+    public $economy_city;
+    public $economy_highway;
+    public $acceleration;
+    public $aspiration;
+
+    //pricing properties
+    public $daily_rate;
     public $vehicle_excess;
+
+    // issue properties
     public $issue_id;
     public $issue_title;
+    public $issue_description;
     public $resolution_cost;
     public $resolution_date;
+
+    // extras properties
     public $bluetooth;
     public $keyless_entry;
     public $gps;
     public $reverse_cam;
     public $audio_input;
+    public $android_auto;
+    public $apple_carplay;
     public $sunroof;
 
     public $title; // to be used in getting vehicle make, model, number plate for calendar
@@ -193,6 +209,7 @@ class Fleet
 
     }
 
+    // function to save the pricing details of a vehicle
     public function create_pricing()
     {
         $sql = "INSERT INTO vehicle_pricing (vehicle_id, daily_rate, vehicle_excess) VALUES (?,?,?)";
@@ -208,7 +225,42 @@ class Fleet
             return false;
         }
     }
+    // function to get save the details of a vehicle
+    public function create_extras()
+    {
+        $sql = "INSERT INTO vehicle_pricing (vehicle_id) VALUES (?)";
 
+        // prepare the statement
+        $stmt = $this->con->prepare($sql);
+
+        if ($stmt->execute([$this->id])) {
+            return true;
+        } else {
+            // print error if something goes wrong
+            printf("Error: %s.\n", $stmt->error);
+            return false;
+        }
+    }
+
+    // function to get save extras of a vehicle
+    public function save_extras()
+    {
+        $sql = "UPDATE vehicle_extras SET bluetooth = ?, keyless_entry = ?, reverse_cam = ?, audio_input = ?, gps = ?, android_auto = ?, apple_carplay = ?, sunroof = ? WHERE vehicle_id = ?";
+
+        // prepare the statement
+        $stmt = $this->con->prepare($sql);
+
+        if ($stmt->execute([$this->bluetooth, $this->keyless_entry, $this->reverse_cam, $this->audio_input, $this->gps, $this->android_auto, $this->apple_carplay, $this->sunroof, $this->id])) {
+            return true;
+        } else {
+            // print error if something goes wrong
+            printf("Error: %s.\n", $stmt->error);
+            return false;
+        }
+
+    }
+
+    // function to get save an image of a vehicle
     public function save_image()
     {
         $sql = "INSERT INTO vehicle_images (url, vehicle_id) VALUES (?,?)";
@@ -226,6 +278,24 @@ class Fleet
 
     }
 
+    // function to update the basic details of vehicle
+    public function update_base()
+    {
+        $query = "UPDATE vehicle_basics SET make = ?, model = ?, number_plate = ?, seats = ?, fuel = ?, transmission = ?, category_id = ?, colour = ?, drive_train = ?, capacity = ?, cylinders = ?, economy_city = ?, economy_highway = ?, acceleration = ?, aspiration = ?, horsepower = ? WHERE id = ?";
+
+        // prepare the statement
+        $stmt = $this->con->prepare($query);
+
+        if ($stmt->execute([$this->make, $this->model, $this->number_plate, $this->seats, $this->fuel, $this->transmission, $this->category_id, $this->colour, $this->drive_train, $this->capacity, $this->cylinders, $this->economy_city, $this->economy_highway, $this->acceleration, $this->aspiration, $this->horsepower, $this->id])) {
+            return true;
+        } else {
+            // print error if something goes wrong
+            printf("Error: %s.\n", $stmt->error);
+            return false;
+        }
+    }
+
+    // function to get the ids of a vehicle with a numbler plate like the onw given.
     public function check_unique_number_plate()
     {
         $sql = "SELECT id FROM vehicle_basics WHERE number_plate LIKE ?";
@@ -236,6 +306,7 @@ class Fleet
 
     }
 
+    // function to get the images of a vehicle
     public function get_vehicle_images()
     {
         $query = "SELECT id, url FROM vehicle_images WHERE vehicle_id = ? ORDER BY created_at DESC";
@@ -243,10 +314,38 @@ class Fleet
         $stmt->execute([$this->id]);
         return $stmt;
     }
+    // function to get the basics of a vehicle based on its id
+    public function get_vehicle_base()
+    {
+        $query = "SELECT * FROM vehicle_basics WHERE id = ?";
+        $stmt  = $this->con->prepare($query);
+        $stmt->execute([$this->id]);
 
+        //fetch the array
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        //set the properties
+        $this->make            = $row['make'];
+        $this->model           = $row['model'];
+        $this->number_plate    = $row['number_plate'];
+        $this->seats           = $row['seats'];
+        $this->fuel            = $row['fuel'];
+        $this->transmission    = $row['transmission'];
+        $this->category_id     = $row['category_id'];
+        $this->colour          = $row['colour'];
+        $this->drive_train     = $row['drive_train'];
+        $this->capacity        = $row['capacity'];
+        $this->cylinders       = $row['cylinders'];
+        $this->economy_city    = $row['economy_city'];
+        $this->economy_highway = $row['economy_highway'];
+        $this->acceleration    = $row['acceleration'];
+        $this->aspiration      = $row['aspiration'];
+    }
+
+    // function to get the extra details of a vehicle
     public function get_vehicle_extras()
     {
-        $query = "SELECT id, bluetooth, keyless_entry, reverse_cam, audio_input, gps, sunroof FROM vehicle_extras WHERE vehicle_id = ? ORDER BY created_at DESC";
+        $query = "SELECT id, bluetooth, keyless_entry, reverse_cam, audio_input, gps, apple_carplay, android_auto, sunroof FROM vehicle_extras WHERE vehicle_id = ?";
         $stmt  = $this->con->prepare($query);
         $stmt->execute([$this->id]);
 
@@ -259,6 +358,8 @@ class Fleet
         $this->keyless_entry = $row['keyless_entry'];
         $this->reverse_cam   = $row['reverse_cam'];
         $this->audio_input   = $row['audio_input'];
+        $this->apple_carplay = $row['apple_carplay'];
+        $this->android_auto  = $row['android_auto'];
         $this->gps           = $row['gps'];
         $this->sunroof       = $row['sunroof'];
     }
@@ -282,7 +383,7 @@ class Fleet
         return $stmt;
     }
 
-// function to get a vehicle's category id
+    // function to get a vehicle's category id based on the vehicle's id
     public function category()
     {
 
@@ -297,6 +398,7 @@ class Fleet
         // return $stmt;
     }
 
+    // function to get the daily rate of a vehicle based on its id.
     public function get_daily_rate()
     {
         $sql  = "SELECT daily_rate FROM vehicle_pricing WHERE vehicle_id = ? LIMIT 0,1";
@@ -343,7 +445,7 @@ class Fleet
     // VEHICLE ISSUES FUNCTIONS
     public function read_issues()
     {
-        $sql  = "SELECT vb.make, vb.model, vb.number_plate, vi.title, vi.resolution_cost, vi.status FROM vehicle_issues vi INNER JOIN vehicle_basics vb ON vi.vehicle_id = vb.id ORDER BY created_at DESC";
+        $sql  = "SELECT vb.make, vb.model, vb.number_plate, vi.id, vi.title, vi.resolution_cost, vi.status, vi.created_at FROM vehicle_issues vi INNER JOIN vehicle_basics vb ON vi.vehicle_id = vb.id ORDER BY created_at DESC";
         $stmt = $this->con->prepare($sql);
         $stmt->execute();
 
@@ -352,9 +454,35 @@ class Fleet
 
     public function read_issue()
     {
-        $sql  = "SELECT vb.make, vb.model, vb.number_plate, vi.title, vi.resolution_cost, vi.status FROM vehicle_issues vi INNER JOIN vehicle_basics vb ON vi.vehicle_id = vb.id WHERE vi.id = ? ORDER BY created_at DESC";
+        $sql  = "SELECT vb.make, vb.model, vb.number_plate, vi.id, vi.title, vi.description, vi.resolution_cost, vi.status, vi.created_at FROM vehicle_issues vi INNER JOIN vehicle_basics vb ON vi.vehicle_id = vb.id WHERE vi.id = ? ORDER BY created_at DESC";
         $stmt = $this->con->prepare($sql);
         $stmt->execute([$this->issue_id]);
+
+        //fetch the array
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        //set the properties
+        $this->make              = $row['make'];
+        $this->model             = $row['model'];
+        $this->number_plate      = $row['number_plate'];
+        $this->issue_title       = $row['title'];
+        $this->issue_description = $row['description'];
+        $this->resolution_cost   = $row['resolution_cost'];
+        $this->resolution_date   = $row['created_at'];
+    }
+
+    public function create_issue()
+    {
+        $query = "INSERT INTO vehicle_issues (vehicle_id, title, description, resolution_cost) VALUES (?,?,?,?)";
+        $stmt  = $this->con->prepare($query);
+        if ($stmt->execute([$this->id, $this->title, $this->description, $this->resolution_cost])) {
+            $this->issue_id = $this->con->lastInsertId();
+            return true;
+        } else {
+            // print error if something goes wrong
+            printf("Error: %s.\n", $stmt->error);
+            return false;
+        }
     }
 
     public function update_rate()
