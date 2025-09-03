@@ -52,12 +52,22 @@ if ($result->rowCount() > 0) {
     if ($fleet->create()) {
         // create the vehicle pricing
         if ($fleet->create_pricing()) {
-            $status                 = "Success";
-            $message                = "Vehicle Created";
-            $response['status']     = $status;
-            $response['message']    = $message;
-            $response['vehicle_id'] = $fleet->id;
-            echo json_encode($response);
+            if ($fleet->create_extras()) {
+                // code...
+                $status                 = "Success";
+                $message                = "Vehicle Created";
+                $response['status']     = $status;
+                $response['message']    = $message;
+                $response['vehicle_id'] = $fleet->id;
+                echo json_encode($response);
+            } else {
+                $status              = "Error";
+                $message             = "An error occured saving vehicle extra (comfort) details.";
+                $response['status']  = $status;
+                $response['message'] = $message;
+                echo json_encode($response);
+            }
+
         } else {
             $status              = "Error";
             $message             = "An error occured saving vehicle pricing details.";
