@@ -24,10 +24,12 @@ $result = $fleet->read();
 // get row count
 $num = $result->rowCount();
 
-//check if any posts
+$response = [];
+
+//check if any vehicles
 
 if ($num > 0) {
-    $fleet_arr         = [];
+    $fleet_arr             = [];
     $fleet_arr['vehicles'] = []; //this is where the data will go
 
     while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
@@ -39,7 +41,7 @@ if ($num > 0) {
             'make'          => $make,
             'model'         => $model,
             'number_plate'  => $number_plate,
-            'daily_rate'    => $daily_rate,
+            'rate'          => $daily_rate,
             'category_name' => $category_name,
         ];
 
@@ -47,12 +49,13 @@ if ($num > 0) {
         array_push($fleet_arr['vehicles'], $fleet_item);
 
     }
-    // convert the posts to json
-    echo json_encode($fleet_arr);
+    $response['status']   = 'Success';
+    $response['message']  = 'Successfully retrieved all vehicles';
+    $response['vehicles'] = $fleet_arr['vehicles'];
 } else {
     // No posts found in the database ($num = 0)
-    $response = [
-        'messsage' => 'No posts found',
-    ];
-    echo json_encode($response);
+    $response['status']  = 'Success';
+    $response['message'] = 'Could not retrieve vehicles';
+    $response['data']    = [];
 }
+echo json_encode($response);
