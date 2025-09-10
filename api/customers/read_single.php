@@ -27,6 +27,8 @@ if (isset($_GET['id'])) {
 // get single customer
 $customer->read_single();
 
+$response = [];
+
 // create the array
 $customer_arr = [
     'id'                  => $customer->id,
@@ -47,4 +49,11 @@ $customer_arr = [
     'license_image'       => $customer->license_image,
 ];
 
-echo json_encode($customer_arr);
+$status  = "Success";
+$message = "Successfully retrieved booking";
+
+$response['status']   = $status;
+$response['message']  = $message;
+$response['customer'] = $customer_arr;
+
+echo json_encode($response);
