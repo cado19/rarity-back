@@ -144,6 +144,56 @@ class Customer
 
     }
 
+    public function update_customer()
+    {
+        $sql = "UPDATE customer_details SET first_name = ?, last_name = ?, email = ?, id_type = ?, id_no = ?, dl_no = ?, dl_expiration = ?, phone_no = ?, residential_address = ?, work_address = ?, date_of_birth = ? WHERE id = ?";
+
+        // prepare the statement
+        $stmt = $this->con->prepare($sql);
+
+        //clean the data
+
+        $this->first_name          = htmlspecialchars(strip_tags($this->first_name));
+        $this->last_name           = htmlspecialchars(strip_tags($this->last_name));
+        $this->email               = htmlspecialchars(strip_tags($this->email));
+        $this->id_type             = htmlspecialchars(strip_tags($this->id_type));
+        $this->id_no               = htmlspecialchars(strip_tags($this->id_no));
+        $this->phone_no            = htmlspecialchars(strip_tags($this->phone_no));
+        $this->dl_no               = htmlspecialchars(strip_tags($this->dl_no));
+        $this->dl_expiry           = htmlspecialchars(strip_tags($this->dl_expiry));
+        $this->residential_address = htmlspecialchars(strip_tags($this->residential_address));
+        $this->work_address        = htmlspecialchars(strip_tags($this->work_address));
+        $this->date_of_birth       = htmlspecialchars(strip_tags($this->date_of_birth));
+
+        if ($stmt->execute([$this->first_name, $this->last_name, $this->email, $this->id_type, $this->id_no, $this->dl_no, $this->dl_expiry, $this->phone_no, $this->residential_address, $this->work_address, $this->date_of_birth, $this->id])) {
+            return true;
+        } else {
+            // print error if something goes wrong
+            printf("Error :  % s . \n ", $stmt->error);
+            return false;
+        }
+    }
+
+    public function delete_customer()
+    {
+        $status = "true";
+        // Create the query
+        $sql = "UPDATE customer_details SET deleted = ? WHERE id = ?";
+
+        // prepare the statement
+        $stmt = $this->con->prepare($sql);
+
+        if ($stmt->execute([$status, $this->id])) {
+            return true;
+
+        } else {
+            // print error if something goes wrong
+            printf("Error :  % s . \n ", $stmt->error);
+            return false;
+        }
+
+    }
+
     public function booking_customers()
     {
         $status = "false";

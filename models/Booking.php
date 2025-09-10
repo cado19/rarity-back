@@ -36,6 +36,7 @@ class Booking
     public $out_capital;
     public $driver_fee;
     public $fuel;
+    public $url; // name of the bookings video
     public $created_at;
 
     // Constructor with DB
@@ -48,7 +49,7 @@ class Booking
     // get single booking
     public function read_single()
     {
-        $sql  = "SELECT a.name AS agent, c.id AS customer_id, c.first_name AS customer_first_name, c.last_name AS customer_last_name, v.id AS vehicle_id, v.model, v.make, v.number_plate, v.drive_train, cat.name AS category, v.seats, vp.daily_rate, d.id AS d_id, d.first_name AS driver_first_name, d.last_name AS driver_last_name, b.start_date, b.end_date, b.start_time, b.end_time, b.total, b.driver_fee, b.in_capital, b.out_capital, b.status, b.fuel, b.booking_no, b.custom_rate, ct.status AS signature_status FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN accounts a ON b.account_id = a.id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id INNER JOIN vehicle_pricing vp ON b.vehicle_id = vp.vehicle_id INNER JOIN contracts ct ON b.id = ct.booking_id INNER JOIN vehicle_categories cat ON v.category_id = cat.id INNER JOIN drivers d ON b.driver_id = d.id WHERE b.id = ?";
+        $sql  = "SELECT a.name AS agent, c.id AS customer_id, c.first_name AS customer_first_name, c.last_name AS customer_last_name, v.id AS vehicle_id, v.model, v.make, v.number_plate, v.drive_train, cat.name AS category, v.seats, vp.daily_rate, d.id AS d_id, d.first_name AS driver_first_name, d.last_name AS driver_last_name, b.start_date, b.end_date, b.start_time, b.end_time, b.total, b.driver_fee, b.in_capital, b.out_capital, b.status, b.fuel, b.booking_no, b.custom_rate, b.media_url, ct.status AS signature_status FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN accounts a ON b.account_id = a.id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id INNER JOIN vehicle_pricing vp ON b.vehicle_id = vp.vehicle_id INNER JOIN contracts ct ON b.id = ct.booking_id INNER JOIN vehicle_categories cat ON v.category_id = cat.id INNER JOIN drivers d ON b.driver_id = d.id WHERE b.id = ?";
         $stmt = $this->con->prepare($sql);
         $stmt->execute([$this->id]);
 
@@ -80,6 +81,7 @@ class Booking
         $this->number_plate = $row['number_plate'];
         $this->ct_status    = $row['signature_status'];
         $this->agent        = $row['agent'];
+        $this->url          = $row['media_url'];
     }
 
     // get all bookings
@@ -233,6 +235,7 @@ class Booking
         return $stmt;
     }
 
+    // save booking
     public function create_booking()
     {
         $status = "upcoming";
@@ -249,6 +252,7 @@ class Booking
 
     }
 
+    // save one day booking
     public function create_1_day_booking()
     {
         $status = "upcoming";
@@ -265,6 +269,7 @@ class Booking
 
     }
 
+    // save booking with custom rate
     public function create_custom_booking()
     {
         $status = "upcoming";
@@ -281,6 +286,7 @@ class Booking
 
     }
 
+    // save one day booking with custom rate
     public function create_custom_1_day_booking()
     {
         $status = "upcoming";
@@ -297,11 +303,27 @@ class Booking
 
     }
 
+    // save booking number of a booking
     public function save_booking_number()
     {
         $sql  = "UPDATE bookings SET booking_no = ? WHERE id = ?";
         $stmt = $this->con->prepare($sql);
         if ($stmt->execute([$this->booking_no, $this->id])) {
+            // $this->id = $this->con->lastInsertId();
+            return true;
+        } else {
+            // print error if something goes wrong
+            printf("Error :  % s . \n ", $stmt->error);
+            return false;
+        }
+    }
+
+    // save booking number of a booking
+    public function save_booking_video()
+    {
+        $sql  = "UPDATE bookings SET media_url = ? WHERE id = ?";
+        $stmt = $this->con->prepare($sql);
+        if ($stmt->execute([$this->url, $this->id])) {
             // $this->id = $this->con->lastInsertId();
             return true;
         } else {
@@ -321,6 +343,7 @@ class Booking
         return $stmt;
     }
 
+    // get the booking details of a driver's bookings
     public function driver_booking_workplan()
     {
         $sql = "SELECT b.id, CONCAT(b.booking_no, ' ', c.first_name, ' ', c.last_name) AS title, b.start_date AS start_time, b.end_date AS end_time, b.driver_id AS 'group', b.status FROM bookings b INNER JOIN customer_details c ON b.customer_id = c.id";
@@ -331,6 +354,7 @@ class Booking
         return $stmt;
     }
 
+    // activate a booking
     public function activate_booking()
     {
         $status = "active";
@@ -347,6 +371,7 @@ class Booking
         }
     }
 
+    // cancel a booking
     public function cancel_booking()
     {
         $status = "cancelled";
@@ -362,7 +387,7 @@ class Booking
             return false;
         }
     }
-
+    // complete a booking
     public function complete_booking()
     {
         $status = "complete";
@@ -379,6 +404,7 @@ class Booking
         }
     }
 
+    // extend a booking
     public function extend_booking()
     {
         $sql  = "UPDATE bookings SET end_date = ?, total = ? WHERE id = ?";
@@ -394,6 +420,7 @@ class Booking
         }
     }
 
+    // update vehicle fuel details a booking
     public function update_fuel()
     {
         $sql  = "UPDATE bookings SET fuel = ? WHERE id = ?";
@@ -466,6 +493,7 @@ class Booking
         $this->c_lname      = $row['last_name'];
     }
 
+    // update a booking
     public function update_booking_details()
     {
 
@@ -482,6 +510,7 @@ class Booking
 
     }
 
+    // update a booking with a custom rate
     public function custom_booking_update()
     {
 

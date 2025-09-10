@@ -55,6 +55,7 @@ $booking_arr = [
     'model'        => $booking->model,
     'number_plate' => $booking->number_plate,
     'agent'        => $booking->agent,
+    'url'          => $booking->url,
 ];
 $status  = "Success";
 $message = "Successfully retrieved booking";
