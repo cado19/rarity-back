@@ -19,6 +19,7 @@ include_once '../../models/Booking.php';
 include_once '../../models/Account.php';
 include_once '../../models/Fleet.php';
 include_once '../../models/Contract.php';
+include_once '../../models/Driver.php';
 
 // Instantiate The DB and connect to it
 $database = new Database();
@@ -28,6 +29,7 @@ $booking  = new Booking($db);
 $account  = new Account($db);
 $fleet    = new Fleet($db);
 $contract = new Contract($db);
+$driver   = new Driver($db);
 
 // 1. get the custom rate or check if it is 0
 // 2. if custom rate is greater than 0, get the vehicle's category_id
