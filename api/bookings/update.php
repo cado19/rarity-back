@@ -53,7 +53,10 @@ $booking->end_time   = $data->end_time;
 $fleet->id = $data->vehicle_id;
 
 // properties of account class
-// $account->id = $data->account_id;
+$account->id = $data->account_id;
+
+// properties of driver class
+$driver->id = $data->driver_id;
 
 // get the duration of the booking
 $start_date = strtotime($data->start_date);
