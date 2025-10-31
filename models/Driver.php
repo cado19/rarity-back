@@ -97,11 +97,11 @@ class Driver
     public function create()
     {
         $sql = "INSERT INTO drivers
-                (first_name, last_name, email, id_no, dl_no, phone_no, date_of_birth, password)
+                (first_name, last_name, email, id_no, dl_no, phone_no, date_of_birth)
                 VALUES (?,?,?,?,?,?,?)";
 
         $stmt = $this->con->prepare($sql);
-        if ($stmt->execute([this->first_name, this->last_name, this->email, this->id_no, this->dl_no, this->phone_no, this->date_of_birth])) {
+        if ($stmt->execute([$this->first_name, $this->last_name, $this->email, $this->id_no, $this->dl_no, $this->phone_no, $this->date_of_birth])) {
             $this->id = $this->con->lastInsertId();
             return true;
         } else {
