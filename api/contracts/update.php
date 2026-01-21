@@ -1,5 +1,12 @@
 <?php
 // THIS FILE WILL HANDLE SIGNATURE UPLOAD TO BACK END AND SAVE FILE NAME TO DB
+
+// Error handling: suppress output, log to file
+error_reporting(0);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/../../php-error.log');
+
 // Headers
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json');
@@ -21,6 +28,8 @@ $response = [];
 
 // get data from post request(booking id, image);
 $data = json_decode(file_get_contents('php://input'));
+// error_log(print_r($data, true)); // log the object to PHP error log
+
 
 $contract->booking_id = $data->id; // set booking id property of contract class 
 $contract->contract_to_sign(); // get id of contract from booking id set above
@@ -42,7 +51,9 @@ if (empty($data->image)) {
 
     $name_file = 'signature_' . date("his") . '.png';
 
-    $filePath = '../../files/signatures/' . $name_file;
+    // $filePath = '../../files/signatures/' . $name_file;
+    $filePath = __DIR__ . '/../../../rarity-client/contract/signatures/' . $name_file;
+
 
     if (file_put_contents($filePath, $imageData)) {
     	$contract->signature = $name_file;
