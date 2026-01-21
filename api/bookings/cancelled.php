@@ -43,6 +43,7 @@ if ($num > 0) {
             'vehicle'      => $make . ' ' . $model,
             'number_plate' => $number_plate,
             'client'       => $c_fname . ' ' . $c_lname,
+            'agent_id'     => $agent_id,
             'start_date'   => $start_date,
             'end_date'     => $end_date,
         ];

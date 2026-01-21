@@ -93,7 +93,7 @@ class Booking
             $this->con->beginTransaction();
 
             //create the query
-            $query = "SELECT b.id, b.booking_no, c.first_name AS c_fname, c.last_name AS c_lname, v.model, v.make, v.number_plate, b.start_date, b.end_date, b.status FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id WHERE b.deleted = ? ORDER BY b.created_at DESC";
+            $query = "SELECT b.id, b.booking_no, c.first_name AS c_fname, c.last_name AS c_lname, v.model, v.make, v.number_plate, b.start_date, b.end_date, b.status, a.id AS agent_id FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id INNER JOIN accounts a ON b.account_id = a.id WHERE b.deleted = ? ORDER BY b.created_at DESC";
             $stmt  = $this->con->prepare($query);
             $stmt->execute([$status]);
             $this->con->commit();
@@ -113,7 +113,7 @@ class Booking
             $this->con->beginTransaction();
 
             //create the query
-            $query = "SELECT b.id, b.booking_no, c.first_name AS c_fname, c.last_name AS c_lname, v.model, v.make, v.number_plate, b.start_date, b.end_date, b.status FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id WHERE b.status = ? ORDER BY b.created_at DESC";
+            $query = "SELECT b.id, b.booking_no, c.id AS customer_id, c.first_name AS c_fname, c.last_name AS c_lname, v.model, v.make, v.number_plate, b.start_date, b.end_date, b.status, a.id AS agent_id FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id INNER JOIN accounts a ON b.account_id = a.id WHERE b.status = ? ORDER BY b.created_at DESC";
             $stmt  = $this->con->prepare($query);
             $stmt->execute([$status]);
             $this->con->commit();
@@ -133,7 +133,7 @@ class Booking
             $this->con->beginTransaction();
 
             //create the query
-            $query = "SELECT b.id, b.booking_no, c.first_name AS c_fname, c.last_name AS c_lname, v.model, v.make, v.number_plate, b.start_date, b.end_date, b.status FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id WHERE b.status = ? ORDER BY b.created_at DESC";
+            $query = "SELECT b.id, b.booking_no, c.id AS customer_id, c.first_name AS c_fname, c.last_name AS c_lname, v.model, v.make, v.number_plate, b.start_date, b.end_date, b.status, a.id AS agent_id FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id INNER JOIN accounts a ON b.account_id = a.id WHERE b.status = ? ORDER BY b.created_at DESC";
             $stmt  = $this->con->prepare($query);
             $stmt->execute([$status]);
             $this->con->commit();
@@ -153,7 +153,7 @@ class Booking
             $this->con->beginTransaction();
 
             //create the query
-            $query = "SELECT b.id, b.booking_no, c.first_name AS c_fname, c.last_name AS c_lname, v.model, v.make, v.number_plate, b.start_date, b.end_date, b.status FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id WHERE b.status = ? ORDER BY b.created_at DESC";
+            $query = "SELECT b.id, b.booking_no, c.id AS customer_id, c.first_name AS c_fname, c.last_name AS c_lname, v.model, v.make, v.number_plate, b.start_date, b.end_date, b.status, a.id AS agent_id FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id INNER JOIN accounts a ON b.account_id = a.id WHERE b.status = ? ORDER BY b.created_at DESC";
             $stmt  = $this->con->prepare($query);
             $stmt->execute([$status]);
             $this->con->commit();
@@ -173,7 +173,7 @@ class Booking
             $this->con->beginTransaction();
 
             //create the query
-            $query = "SELECT b.id, b.booking_no, c.first_name AS c_fname, c.last_name AS c_lname, v.model, v.make, v.number_plate, b.start_date, b.end_date, b.status FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id WHERE b.status = ? ORDER BY b.created_at DESC";
+            $query = "SELECT b.id, b.booking_no, c.first_name AS c_fname, c.last_name AS c_lname, v.model, v.make, v.number_plate, b.start_date, b.end_date, b.status, a.id AS agent_id FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id INNER JOIN accounts a ON b.account_id = a.id WHERE b.status = ? ORDER BY b.created_at DESC";
             $stmt  = $this->con->prepare($query);
             $stmt->execute([$status]);
             $this->con->commit();

@@ -42,7 +42,9 @@ if ($num > 0) {
             'booking_no'   => $booking_no,
             'vehicle'      => $make . ' ' . $model,
             'number_plate' => $number_plate,
+            'customer_id'  => $customer_id,
             'client'       => $c_fname . ' ' . $c_lname,
+            'agent_id'     => $agent_id,
             'start_date'   => $start_date,
             'end_date'     => $end_date,
         ];
