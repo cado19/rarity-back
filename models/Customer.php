@@ -50,7 +50,7 @@ class Customer
 
     }
 
-    // get single vehicle
+    // get single customer
     public function read_single()
     {
         $status = "false";
@@ -83,6 +83,47 @@ class Customer
         $this->id_back_image       = $row['id_back_image'];
         $this->profile_image       = $row['profile_image'];
         $this->license_image       = $row['license_image'];
+
+        return $stmt;
+    }
+
+    // get customer by email
+    public function read_by_email()
+    {
+        $status = "false";
+
+        $query = "SELECT id, first_name, last_name, email, id_type, id_no, phone_no, dl_no, dl_expiration, residential_address, work_address, date_of_birth, id_image, id_back_image, profile_image, license_image
+              FROM customer_details
+              WHERE deleted = ? AND email = ?
+              LIMIT 0, 1";
+
+        $stmt = $this->con->prepare($query);
+        $stmt->execute([$status, $this->email]);
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (! $row) {
+            return false; // No customer found
+        }
+
+        if ($row) {
+            $this->id                  = $row['id'];
+            $this->first_name          = $row['first_name'];
+            $this->last_name           = $row['last_name'];
+            $this->email               = $row['email'];
+            $this->id_type             = $row['id_type'];
+            $this->id_no               = $row['id_no'];
+            $this->phone_no            = $row['phone_no'];
+            $this->dl_no               = $row['dl_no'];
+            $this->dl_expiry           = $row['dl_expiration'];
+            $this->residential_address = $row['residential_address'];
+            $this->work_address        = $row['work_address'];
+            $this->date_of_birth       = $row['date_of_birth'];
+            $this->id_image            = $row['id_image'];
+            $this->id_back_image       = $row['id_back_image'];
+            $this->profile_image       = $row['profile_image'];
+            $this->license_image       = $row['license_image'];
+        }
 
         return $stmt;
     }
@@ -201,7 +242,7 @@ class Customer
         try {
             $this->con->beginTransaction();
             // Create the query
-            $sql = "SELECT id, first_name, last_name FROM customer_details WHERE deleted =  ? ORDER BY id DESC";
+            $sql = "SELECT id, first_name, last_name FROM customer_details WHERE deleted = ? ORDER BY id DESC";
 
             // prepare the statement
             $stmt = $this->con->prepare($sql);
@@ -252,6 +293,38 @@ class Customer
         $stmt = $this->con->prepare($sql);
 
         if ($stmt->execute([$this->id_image, $this->id_back_image, $this->id])) {
+            return true;
+        } else {
+            // print error if something goes wrong
+            printf("Error :  % s . \n ", $stmt->error);
+            return false;
+        }
+    }
+
+    public function save_id_front()
+    {
+        $sql = "UPDATE customer_details SET id_image = ? WHERE id = ?";
+
+        // prepare the statement
+        $stmt = $this->con->prepare($sql);
+
+        if ($stmt->execute([$this->id_image, $this->id])) {
+            return true;
+        } else {
+            // print error if something goes wrong
+            printf("Error :  % s . \n ", $stmt->error);
+            return false;
+        }
+    }
+
+    public function save_id_back()
+    {
+        $sql = "UPDATE customer_details SET id_back_image = ? WHERE id = ?";
+
+        // prepare the statement
+        $stmt = $this->con->prepare($sql);
+
+        if ($stmt->execute([$this->id_back_image, $this->id])) {
             return true;
         } else {
             // print error if something goes wrong
