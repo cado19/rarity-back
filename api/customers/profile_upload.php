@@ -41,7 +41,9 @@ if (empty($data->image)) {
 
     $name_file = 'profile_' . date("his") . '.png';
 
-    $filePath = '../../files/customers/profile/' . $name_file;
+    // $filePath = '../../files/customers/profile/' . $name_file;
+    $uploadDir = realpath(__DIR__ . '/../../files/customers/profile/');
+    $filePath  = $uploadDir . $name_file;
 
     if (file_put_contents($filePath, $imageData)) {
         $customer->profile_image = $name_file;
