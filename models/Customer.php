@@ -169,18 +169,63 @@ class Customer
         $this->id_no               = htmlspecialchars(strip_tags($this->id_no));
         $this->phone_no            = htmlspecialchars(strip_tags($this->phone_no));
         $this->dl_no               = htmlspecialchars(strip_tags($this->dl_no));
-        $this->dl_expiry           = htmlspecialchars(strip_tags($this->dl_expiry));
+        $this->dl_expiry           = ! empty($this->dl_expiry) ? htmlspecialchars(strip_tags($this->dl_expiry)) : null;
         $this->residential_address = htmlspecialchars(strip_tags($this->residential_address));
         $this->work_address        = htmlspecialchars(strip_tags($this->work_address));
-        $this->date_of_birth       = htmlspecialchars(strip_tags($this->date_of_birth));
+        $this->date_of_birth       = ! empty($this->date_of_birth) ? htmlspecialchars(strip_tags($this->date_of_birth)) : null;
 
-        if ($stmt->execute([$this->first_name, $this->last_name, $this->email, $this->id_type, $this->id_no, $this->dl_no, $this->dl_expiry, $this->phone_no, $this->residential_address, $this->work_address, $this->date_of_birth])) {
+// ------------------ The old way ------------------
+        // if ($stmt->execute([$this->first_name, $this->last_name, $this->email, $this->id_type, $this->id_no, $this->dl_no, $this->dl_expiry, $this->phone_no, $this->residential_address, $this->work_address, $this->date_of_birth])) {
+        //     $this->id = $this->con->lastInsertId();
+        //     return true;
+        // } else {
+        //     // print error if something goes wrong
+        //     printf("Error :  % s . \n ", $stmt->error);
+        //     return false;
+        // }
+
+        // ------------------ The new way ------------------
+        try {
+            $stmt->execute([
+                $this->first_name,
+                $this->last_name,
+                $this->email,
+                $this->id_type,
+                $this->id_no,
+                $this->dl_no,
+                $this->dl_expiry, // NULL if not provided
+                $this->phone_no,
+                $this->residential_address,
+                $this->work_address,
+                $this->date_of_birth, // NULL if not provided
+            ]);
+
             $this->id = $this->con->lastInsertId();
-            return true;
-        } else {
-            // print error if something goes wrong
-            printf("Error :  % s . \n ", $stmt->error);
-            return false;
+
+            return [
+                "status"   => "Success",
+                "message"  => "Customer Created",
+                "customer" => [
+                    "id"                  => $this->id,
+                    "first_name"          => $this->first_name,
+                    "last_name"           => $this->last_name,
+                    "email"               => $this->email,
+                    "id_type"             => $this->id_type,
+                    "id_no"               => $this->id_no,
+                    "phone_no"            => $this->phone_no,
+                    "dl_no"               => $this->dl_no,
+                    "dl_expiry"           => $this->dl_expiry,
+                    "residential_address" => $this->residential_address,
+                    "work_address"        => $this->work_address,
+                    "date_of_birth"       => $this->date_of_birth,
+                ],
+            ];
+        } catch (PDOException $e) {
+            return [
+                "status"  => "Error",
+                "message" => "Customer Not Created",
+                "error"   => $e->getMessage(),
+            ];
         }
 
     }

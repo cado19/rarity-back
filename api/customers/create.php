@@ -42,12 +42,12 @@ $customer->last_name           = $data->l_name;
 $customer->email               = $data->email;
 $customer->id_type             = $data->id_type;
 $customer->id_no               = $data->id_number;
-$customer->phone_no            = $data->phone_number;
-$customer->dl_number           = $data->dl_number;
-$customer->dl_expiry           = $data->dl_expiry;
-$customer->residential_address = $data->residential_address;
-$customer->work_address        = $data->work_address;
-$customer->date_of_birth       = $data->date_of_birth;
+$customer->phone_no            = $data->phone_number ?? null;
+$customer->dl_number           = $data->dl_number ?? null;
+$customer->dl_expiry           = $data->dl_expiry ?? null;
+$customer->residential_address = $data->residential_address ?? null;
+$customer->work_address        = $data->work_address ?? null;
+$customer->date_of_birth       = $data->date_of_birth ?? null;
 
 // echo json_encode($customer->last_name);
 
@@ -62,22 +62,25 @@ if ($result->rowCount() > 0) {
     echo json_encode($response);
 } else {
     // code...
-    if ($customer->create()) {
-        $status                  = "Success";
-        $message                 = "Customer Created";
-        $response['status']      = $status;
-        $response['message']     = $message;
-        $response['customer_id'] = $customer->id;
+    // if ($customer->create()) {
+    //     $status                  = "Success";
+    //     $message                 = "Customer Created";
+    //     $response['status']      = $status;
+    //     $response['message']     = $message;
+    //     $response['customer_id'] = $customer->id;
 
-        echo json_encode($response);
+    //     echo json_encode($response);
 
-    } else {
-        $status              = "Error";
-        $message             = "Customer Not Created.";
-        $response['status']  = $status;
-        $response['message'] = $message;
+    // } else {
+    //     $status              = "Error";
+    //     $message             = "Customer Not Created.";
+    //     $response['status']  = $status;
+    //     $response['message'] = $message;
 
-        echo json_encode($response);
+    //     echo json_encode($response);
 
-    }
+    // }
+    $response = $customer->create();
+    echo json_encode($response);
+
 }
