@@ -37,6 +37,9 @@ if (empty($data->image)) {
 
     $name_file = 'license_' . date("his") . '.png';
 
+    $uploadDir = realpath(__DIR__ . '/../../files/customers/license/');
+    $filePath  = $uploadDir . '/' . $name_file;
+
     $filePath = '../../files/customers/license/' . $name_file;
 
     if (file_put_contents($filePath, $imageData)) {

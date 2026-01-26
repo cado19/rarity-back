@@ -37,7 +37,10 @@ if (empty($data->image)) {
 
     $name_file = 'id_back_' . date("his") . '.png';
 
-    $filePath = '../../files/customers/id/' . $name_file;
+    $uploadDir = realpath(__DIR__ . '/../../files/customers/id/');
+    $filePath  = $uploadDir . '/' . $name_file;
+
+    // $filePath = '../../files/customers/id/' . $name_file;
 
     if (file_put_contents($filePath, $imageData)) {
         $customer->id_back_image = $name_file;
