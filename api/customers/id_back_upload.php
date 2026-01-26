@@ -40,8 +40,8 @@ if (empty($data->image)) {
     $filePath = '../../files/customers/id/' . $name_file;
 
     if (file_put_contents($filePath, $imageData)) {
-        $customer->id_image = $name_file;
-        $customer->id       = $data->id;
+        $customer->id_back_image = $name_file;
+        $customer->id            = $data->id;
         if ($customer->save_id_back()) {
             // id uploaded and file name saved to db
             $message             = "ID successfully saved";
