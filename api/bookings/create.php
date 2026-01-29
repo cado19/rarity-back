@@ -1,8 +1,6 @@
 <?php
 // THIS FILE WILL SAVE A BOOKING FROM EXTERNAL REQUESTS TO THE DATABASE
 
-
-
 // Headers
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json');
@@ -21,6 +19,7 @@ include_once '../../models/Account.php';
 include_once '../../models/Fleet.php';
 include_once '../../models/Contract.php';
 include_once '../../models/Driver.php';
+include_once '../../models/Notification.php';
 
 // Instantiate The DB and connect to it
 $database = new Database();
@@ -124,9 +123,25 @@ if (! empty($data->custom_rate)) {
             $status     = "Success";
             $booking_id = $booking->id;
 
+            // ✅ Sendnotificationbeforeresponse;
+            $notification            = new Notification($db);
+            $notification->user_id   = $booking->c_id;
+            $notification->user_type = "customer";
+            $tokens                  = $notification->getTokens();
+
             $response['message']    = $message;
             $response['status']     = $status;
             $response['booking_id'] = $booking_id;
+
+            foreach ($tokens as $token) {
+                $notification->expo_token = $token;
+                $notification->send(
+                    "Booking Confirmed",
+                    "Your booking {$booking->booking_no} has been created.",
+                    ["bookingId" => $booking->id]
+                );
+            }
+
             echo json_encode($response);
         } else {
             $message = "An error occured. Try again later";
@@ -166,6 +181,21 @@ if (! empty($data->custom_rate)) {
         $message    = "Successfully created booking";
         $status     = "Success";
         $booking_id = $booking->id;
+
+        // ✅ Sendnotificationbeforeresponse;
+        $notification            = new Notification($db);
+        $notification->user_id   = $booking->c_id;
+        $notification->user_type = "customer";
+        $tokens                  = $notification->getTokens();
+
+        foreach ($tokens as $token) {
+            $notification->expo_token = $token;
+            $notification->send(
+                "Booking Confirmed",
+                "Your booking {$booking->booking_no} has been created.",
+                ["bookingId" => $booking->id]
+            );
+        }
 
         $response['message']    = $message;
         $response['status']     = $status;

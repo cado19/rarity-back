@@ -51,7 +51,7 @@ if (empty($data->image)) {
     $name_file = 'signature_' . date("his") . '.png';
 
     // $filePath = '../../files/signatures/' . $name_file;
-    $uploadDir = realpath(__DIR__ . '/../../../rarity-client/contract/signatures//');
+    $uploadDir = realpath(__DIR__ . '/../../../client/contract/signatures//');
     $filePath  = $uploadDir . '/' . $name_file;
     // $filePath = __DIR__ . '/../../../rarity-client/contract/signatures/' . $name_file;
 
