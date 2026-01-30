@@ -2,7 +2,9 @@
 class Reservation
 {
     private $conn;
-    private $table = "reservations";
+    private $table            = "reservations";
+    private $customers_table  = "customer_details";
+    private $categories_table = "vehicle_categories";
 
     public $id;
     public $customer_id;
@@ -41,8 +43,24 @@ class Reservation
     // Read all reservations
     public function readAll()
     {
-        $query = "SELECT * FROM " . $this->table . " ORDER BY created_at DESC";
-        $stmt  = $this->conn->prepare($query);
+        $query = "SELECT
+                r.id,
+                r.customer_id,
+                r.vehicle_category_id,
+                r.start_date,
+                r.end_date,
+                r.opened,
+                r.created_at,
+                CONCAT(c.first_name, ' ', c.last_name) AS client,
+                v.name AS category
+              FROM " . $this->table . " r
+              LEFT JOIN " . $this->customers_table . " c
+                ON r.customer_id = c.id
+              LEFT JOIN " . $this->categories_table . " v
+                ON r.vehicle_category_id = v.id
+              ORDER BY r.created_at DESC";
+
+        $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt;
     }
