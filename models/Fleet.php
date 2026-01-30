@@ -4,7 +4,9 @@ class Fleet
 {
     // DB STUFF
     private $con;
-    private $table = "vehicle_basics";
+    private $table            = "vehicle_basics";
+    private $pricing_table    = "vehicle_pricing";
+    private $categories_table = "vehicle_categories";
 
     // Vehicle properties
     public $id;
@@ -367,19 +369,9 @@ class Fleet
     // function to retrieve all categories for saving a vehicle
     public function categories()
     {
-
-        try {
-            $con->beginTransaction();
-
-            $sql  = "SELECT id, name FROM vehicle_categories ORDER BY id ASC";
-            $stmt = $con->prepare($sql);
-            $stmt->execute();
-
-            $con->commit();
-        } catch (Exception $e) {
-            $con->rollback();
-        }
-
+        $sql  = "SELECT id, name FROM " . $this->categories_table . " ORDER BY id ASC";
+        $stmt = $this->con->prepare($sql);
+        $stmt->execute();
         return $stmt;
     }
 

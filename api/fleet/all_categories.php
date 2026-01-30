@@ -1,5 +1,5 @@
 <?php
-// THIS FILE WILL DELIVER ALL POSTS TO EXTERNAL REQUESTS
+// THIS FILE WILL DELIVER ALL categories TO EXTERNAL REQUESTS
 
 // Headers
 header('Access-Control-Allow-Origin: *');
@@ -13,42 +13,36 @@ include_once '../../models/Fleet.php';
 $database = new Database();
 $db       = $database->connect();
 
-// print_r($db);
-
-// instantiate blog post object
+// instantiate fleet object
 $fleet = new Fleet($db);
 
 // vehicles query as a function
-$result = $fleet->read();
+$result = $fleet->categories();
 
 // get row count
 $num = $result->rowCount();
 
-//check if any posts
-
+// check if any categories
 if ($num > 0) {
-    $posts_arr         = [];
-    $posts_arr['data'] = []; //this is where the data will go
+    $categories_arr         = [];
+    $categories_arr['data'] = [];
 
     while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-        extract($row);
-
-        // single post item array
-        $post_item = [
-            'id'   => $id,
-            'name' => $name,
+        $categories_item = [
+            'id'   => $row['id'],
+            'name' => $row['name'],
         ];
-
-        // push that post item to 'data' index of array
-        array_push($posts_arr['data'], $post_item);
-
+        $categories_arr['data'][] = $categories_item;
     }
-    // convert the posts to json
-    echo json_encode($posts_arr);
+
+    echo json_encode([
+        "status" => "Success",
+        "count"  => $num,
+        "data"   => $categories_arr['data'],
+    ]);
 } else {
-    // No posts found in the database ($num = 0)
-    $response = [
-        'messsage' => 'No categories found',
-    ];
-    echo json_encode($response);
+    echo json_encode([
+        "status"  => "Error",
+        "message" => "No categories found",
+    ]);
 }
