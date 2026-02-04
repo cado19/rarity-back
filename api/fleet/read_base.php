@@ -23,35 +23,45 @@ if (isset($_GET['id'])) {
     die();
 }
 
-// get single fleet
-$fleet->get_vehicle_base();
+try {
+    $result = $fleet->get_vehicle_base();
 
-//response array
-$response = [];
+    if (! $result) {
+        echo json_encode([
+            "status"  => "Error",
+            "message" => "No base data found for this vehicle",
+            "extras"  => [],
+        ]);
+        exit;
+    }
 
-$base_arr = [
-    'make'            => $fleet->make,
-    'model'           => $fleet->model,
-    'number_plate'    => $fleet->number_plate,
-    'seats'           => $fleet->seats,
-    'fuel'            => $fleet->fuel,
-    'transmission'    => $fleet->transmission,
-    'category_id'     => $fleet->category_id,
-    'colour'          => $fleet->colour,
-    'drive_train'     => $fleet->drive_train,
-    'capacity'        => $fleet->capacity,
-    'cylinders'       => $fleet->cylinders,
-    'economy_city'    => $fleet->economy_city,
-    'economy_highway' => $fleet->economy_highway,
-    'acceleration'    => $fleet->acceleration,
-    'aspiration'      => $fleet->aspiration,
-];
+    $base_arr = [
+        'make'            => $fleet->make,
+        'model'           => $fleet->model,
+        'number_plate'    => $fleet->number_plate,
+        'seats'           => $fleet->seats,
+        'fuel'            => $fleet->fuel,
+        'transmission'    => $fleet->transmission,
+        'category_id'     => $fleet->category_id,
+        'colour'          => $fleet->colour,
+        'drive_train'     => $fleet->drive_train,
+        'capacity'        => $fleet->capacity,
+        'cylinders'       => $fleet->cylinders,
+        'economy_city'    => $fleet->economy_city,
+        'economy_highway' => $fleet->economy_highway,
+        'acceleration'    => $fleet->acceleration,
+        'aspiration'      => $fleet->aspiration,
+    ];
 
-$status  = "Success";
-$message = "Successfully retrieved basic of vehicle";
+    echo json_encode([
+        "status"  => "Success",
+        "message" => "Successfully retrieved base data",
+        "base"    => $base_arr,
+    ]);
 
-$response['status']  = $status;
-$response['message'] = $message;
-$response['vehicle'] = $base_arr;
-
-echo json_encode($response);
+} catch (Exception $e) {
+    echo json_encode([
+        "status"  => "Error",
+        "message" => $e->getMessage(),
+    ]);
+}

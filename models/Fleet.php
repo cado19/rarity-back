@@ -28,8 +28,12 @@ class Fleet
     public $aspiration;
 
     //pricing properties
+    public $pricing_id;
     public $daily_rate;
     public $vehicle_excess;
+    public $refundable_security_deposit;
+    public $monthly_target;
+    public $cdw_rate;
 
     // issue properties
     public $issue_id;
@@ -39,6 +43,7 @@ class Fleet
     public $resolution_date;
 
     // extras properties
+    public $extras_id;
     public $bluetooth;
     public $keyless_entry;
     public $gps;
@@ -214,17 +219,55 @@ class Fleet
     // function to save the pricing details of a vehicle
     public function create_pricing()
     {
-        $sql = "INSERT INTO vehicle_pricing (vehicle_id, daily_rate, vehicle_excess) VALUES (?,?,?)";
+        try {
+            $sql = "INSERT INTO vehicle_pricing (vehicle_id, daily_rate, vehicle_excess, refundable_security_deposit, cdw_rate, monthly_target) VALUES (?,?,?,?,?,?)";
+            // prepare the statement
+            $stmt = $this->con->prepare($sql);
 
-        // prepare the statement
-        $stmt = $this->con->prepare($sql);
+            $success = $stmt->execute([
+                $this->id,
+                $this->daily_rate,
+                $this->vehicle_excess,
+                $this->refundable_security_deposit,
+                $this->cdw_rate,
+                $this->monthly_target,
+            ]);
 
-        if ($stmt->execute([$this->id, $this->daily_rate, $this->vehicle_excess])) {
-            return true;
-        } else {
-            // print error if something goes wrong
-            printf("Error: %s.\n", $stmt->error);
-            return false;
+            return $success;
+        } catch (PDOException $e) {
+            // Log or bubble up the SQL error
+            throw new Exception("SQL Error in update_pricing: " . $e->getMessage());
+        }
+    }
+
+    // function to update pricing details of a vehicle
+    public function update_pricing()
+    {
+        try {
+            $sql = "UPDATE vehicle_pricing
+                   SET daily_rate = ?,
+                       vehicle_excess = ?,
+                       refundable_security_deposit = ?,
+                       cdw_rate = ?,
+                       monthly_target = ?
+                 WHERE vehicle_id = ?";
+
+            $stmt = $this->con->prepare($sql);
+
+            $success = $stmt->execute([
+                $this->daily_rate,
+                $this->vehicle_excess,
+                $this->refundable_security_deposit,
+                $this->cdw_rate,
+                $this->monthly_target,
+                $this->id,
+            ]);
+
+            return $success;
+
+        } catch (PDOException $e) {
+            // Log or bubble up the SQL error
+            throw new Exception("SQL Error in update_pricing: " . $e->getMessage());
         }
     }
     // function to get save the details of a vehicle
@@ -319,51 +362,131 @@ class Fleet
     // function to get the basics of a vehicle based on its id
     public function get_vehicle_base()
     {
-        $query = "SELECT * FROM vehicle_basics WHERE id = ?";
-        $stmt  = $this->con->prepare($query);
-        $stmt->execute([$this->id]);
+        try {
+            $query = "SELECT * FROM vehicle_basics WHERE id = ?";
+            $stmt  = $this->con->prepare($query);
+            $stmt->execute([$this->id]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        //fetch the array
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (! $row) {
+                // No extras found for this vehicle
+                return null;
+            }
 
-        //set the properties
-        $this->make            = $row['make'];
-        $this->model           = $row['model'];
-        $this->number_plate    = $row['number_plate'];
-        $this->seats           = $row['seats'];
-        $this->fuel            = $row['fuel'];
-        $this->transmission    = $row['transmission'];
-        $this->category_id     = $row['category_id'];
-        $this->colour          = $row['colour'];
-        $this->drive_train     = $row['drive_train'];
-        $this->capacity        = $row['capacity'];
-        $this->cylinders       = $row['cylinders'];
-        $this->economy_city    = $row['economy_city'];
-        $this->economy_highway = $row['economy_highway'];
-        $this->acceleration    = $row['acceleration'];
-        $this->aspiration      = $row['aspiration'];
+            // Dynamically assign extras
+            $fields = [
+                'make',
+                'model',
+                'number_plate',
+                'seats',
+                'fuel',
+                'transmission',
+                'category_id',
+                'colour',
+                'drive_train',
+                'capacity',
+                'cylinders',
+                'economy_city',
+                'economy_highway',
+                'acceleration',
+                'aspiration',
+            ];
+
+            foreach ($fields as $field) {
+                $this->$field = $row[$field];
+            }
+
+            return $row;
+        } catch (PDOException $e) {
+            // Bubble up SQL error so the endpoint can handle it
+            throw new Exception("SQL Error in get_vehicle_extras: " . $e->getMessage());
+        }
+
+    }
+
+    // function to get pricing details of a vehicle
+    public function get_vehicle_pricing()
+    {
+        try {
+            $query = "SELECT id, daily_rate, vehicle_excess, refundable_security_deposit, cdw_rate, monthly_target FROM vehicle_pricing WHERE vehicle_id = ?";
+            $stmt  = $this->con->prepare($query);
+            $stmt->execute([$this->id]);
+
+            //fetch the array
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (! $row) {
+                // No extras found for this vehicle
+                return null;
+            }
+
+            // Keep vehicle id intact, store extras id separately
+            $this->pricing_id = $row['id'];
+
+            // Dynamically assign extras
+            $fields = [
+                'daily_rate',
+                'vehicle_excess',
+                'refundable_security_deposit',
+                'cdw_rate',
+                'monthly_target',
+            ];
+
+            foreach ($fields as $field) {
+                $this->$field = $row[$field];
+            }
+
+            return $row;
+
+        } catch (PDOException $e) {
+            // Bubble up SQL error so the endpoint can handle it
+            throw new Exception("SQL Error in get_vehicle_extras: " . $e->getMessage());
+        }
     }
 
     // function to get the extra details of a vehicle
     public function get_vehicle_extras()
     {
-        $query = "SELECT id, bluetooth, keyless_entry, reverse_cam, audio_input, gps, apple_carplay, android_auto, sunroof FROM vehicle_extras WHERE vehicle_id = ?";
-        $stmt  = $this->con->prepare($query);
-        $stmt->execute([$this->id]);
+        try {
+            $query = "SELECT id, bluetooth, keyless_entry, reverse_cam, audio_input, gps, apple_carplay, android_auto, sunroof FROM vehicle_extras WHERE vehicle_id = ?";
+            $stmt  = $this->con->prepare($query);
+            $stmt->execute([$this->id]);
 
-        //fetch the array
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            //fetch the array
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        //set the properties
-        $this->id            = $row['id'];
-        $this->bluetooth     = $row['bluetooth'];
-        $this->keyless_entry = $row['keyless_entry'];
-        $this->reverse_cam   = $row['reverse_cam'];
-        $this->audio_input   = $row['audio_input'];
-        $this->apple_carplay = $row['apple_carplay'];
-        $this->android_auto  = $row['android_auto'];
-        $this->gps           = $row['gps'];
-        $this->sunroof       = $row['sunroof'];
+            if (! $row) {
+                // No extras found for this vehicle
+                return null;
+            }
+
+            // Keep vehicle id intact, store extras id separately
+            $this->extras_id = $row['id'];
+
+            // Dynamically assign extras
+            $fields = [
+                'bluetooth',
+                'keyless_entry',
+                'reverse_cam',
+                'audio_input',
+                'gps',
+                'apple_carplay',
+                'android_auto',
+                'sunroof',
+            ];
+
+            foreach ($fields as $field) {
+                $this->$field = $row[$field];
+            }
+
+            return $row;
+
+        } catch (PDOException $e) {
+            // Bubble up SQL error so the endpoint can handle it
+            throw new Exception("SQL Error in get_vehicle_extras: " . $e->getMessage());
+
+        }
+
     }
 
     // function to retrieve all categories for saving a vehicle

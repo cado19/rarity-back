@@ -24,29 +24,64 @@ if (isset($_GET['id'])) {
     die();
 }
 
-// get images of the vehicle'S
-$result = $fleet->get_vehicle_extras();
+// get extras of the vehicle
+// $result = $fleet->get_vehicle_extras();
 
-//response array
-$response = [];
+// //response array
+// $response = [];
 
-$extras_arr = [
-    // 'id'            => $fleet->id,
-    'bluetooth'     => $fleet->bluetooth,
-    'keyless_entry' => $fleet->keyless_entry,
-    'reverse_cam'   => $fleet->reverse_cam,
-    'audio_input'   => $fleet->audio_input,
-    'gps'           => $fleet->gps,
-    'android_auto'  => $fleet->android_auto,
-    'apple_carplay' => $fleet->apple_carplay,
-    'sunroof'       => $fleet->sunroof,
-];
+// $extras_arr = [
+//     // 'id'            => $fleet->id,
+//     'bluetooth'     => $fleet->bluetooth,
+//     'keyless_entry' => $fleet->keyless_entry,
+//     'reverse_cam'   => $fleet->reverse_cam,
+//     'audio_input'   => $fleet->audio_input,
+//     'gps'           => $fleet->gps,
+//     'android_auto'  => $fleet->android_auto,
+//     'apple_carplay' => $fleet->apple_carplay,
+//     'sunroof'       => $fleet->sunroof,
+// ];
 
-$status  = "Success";
-$message = "Successfully retrieved extras";
+// $status  = "Success";
+// $message = "Successfully retrieved extras";
 
-$response['status']  = $status;
-$response['message'] = $message;
-$response['extras']  = $extras_arr;
+// $response['status']  = $status;
+// $response['message'] = $message;
+// $response['extras']  = $extras_arr;
 
-echo json_encode($response);
+// echo json_encode($response);
+try {
+    $result = $fleet->get_vehicle_extras();
+
+    if (! $result) {
+        echo json_encode([
+            "status"  => "Error",
+            "message" => "No extras found for this vehicle",
+            "extras"  => [],
+        ]);
+        exit;
+    }
+
+    $extras_arr = [
+        'bluetooth'     => $fleet->bluetooth,
+        'keyless_entry' => $fleet->keyless_entry,
+        'reverse_cam'   => $fleet->reverse_cam,
+        'audio_input'   => $fleet->audio_input,
+        'gps'           => $fleet->gps,
+        'android_auto'  => $fleet->android_auto,
+        'apple_carplay' => $fleet->apple_carplay,
+        'sunroof'       => $fleet->sunroof,
+    ];
+
+    echo json_encode([
+        "status"  => "Success",
+        "message" => "Successfully retrieved extras",
+        "extras"  => $extras_arr,
+    ]);
+
+} catch (Exception $e) {
+    echo json_encode([
+        "status"  => "Error",
+        "message" => $e->getMessage(),
+    ]);
+}
