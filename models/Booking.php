@@ -24,6 +24,7 @@ class Booking
     public $daily_rate;
     public $custom_rate;
     public $total;
+    public $cdw_total;
     public $make;
     public $model;
     public $vehicle_id;
@@ -49,39 +50,51 @@ class Booking
     // get single booking
     public function read_single()
     {
-        $sql  = "SELECT a.name AS agent, c.id AS customer_id, c.first_name AS customer_first_name, c.last_name AS customer_last_name, v.id AS vehicle_id, v.model, v.make, v.number_plate, v.drive_train, cat.name AS category, v.seats, vp.daily_rate, d.id AS d_id, d.first_name AS driver_first_name, d.last_name AS driver_last_name, b.start_date, b.end_date, b.start_time, b.end_time, b.total, b.driver_fee, b.in_capital, b.out_capital, b.status, b.fuel, b.booking_no, b.custom_rate, b.media_url, ct.status AS signature_status FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN accounts a ON b.account_id = a.id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id INNER JOIN vehicle_pricing vp ON b.vehicle_id = vp.vehicle_id INNER JOIN contracts ct ON b.id = ct.booking_id INNER JOIN vehicle_categories cat ON v.category_id = cat.id INNER JOIN drivers d ON b.driver_id = d.id WHERE b.id = ?";
-        $stmt = $this->con->prepare($sql);
-        $stmt->execute([$this->id]);
+        try {
+            $sql  = "SELECT a.name AS agent, c.id AS customer_id, c.first_name AS customer_first_name, c.last_name AS customer_last_name, v.id AS vehicle_id, v.model, v.make, v.number_plate, v.drive_train, cat.name AS category, v.seats, vp.daily_rate, d.id AS d_id, d.first_name AS driver_first_name, d.last_name AS driver_last_name, b.start_date, b.end_date, b.start_time, b.end_time, b.total, b.cdw_total, b.driver_fee, b.in_capital, b.out_capital, b.status, b.fuel, b.booking_no, b.custom_rate, b.media_url, ct.status AS signature_status FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN accounts a ON b.account_id = a.id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id INNER JOIN vehicle_pricing vp ON b.vehicle_id = vp.vehicle_id INNER JOIN contracts ct ON b.id = ct.booking_id INNER JOIN vehicle_categories cat ON v.category_id = cat.id INNER JOIN drivers d ON b.driver_id = d.id WHERE b.id = ?";
+            $stmt = $this->con->prepare($sql);
+            $stmt->execute([$this->id]);
 
-        //fetch the array
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            //fetch the array
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $this->booking_no   = $row['booking_no'];
-        $this->c_id         = $row['customer_id'];
-        $this->c_fname      = $row['customer_first_name'];
-        $this->c_lname      = $row['customer_last_name'];
-        $this->d_id         = $row['d_id'];
-        $this->d_fname      = $row['driver_first_name'];
-        $this->d_lname      = $row['driver_last_name'];
-        $this->start_date   = $row['start_date'];
-        $this->end_date     = $row['end_date'];
-        $this->start_time   = $row['start_time'];
-        $this->end_time     = $row['end_time'];
-        $this->driver_fee   = $row['driver_fee'];
-        $this->in_capital   = $row['in_capital'];
-        $this->out_capital  = $row['out_capital'];
-        $this->status       = $row['status'];
-        $this->custom_rate  = $row['custom_rate'];
-        $this->daily_rate   = $row['daily_rate'];
-        $this->fuel         = $row['fuel'];
-        $this->total        = $row['total'];
-        $this->vehicle_id   = $row['vehicle_id'];
-        $this->make         = $row['make'];
-        $this->model        = $row['model'];
-        $this->number_plate = $row['number_plate'];
-        $this->ct_status    = $row['signature_status'];
-        $this->agent        = $row['agent'];
-        $this->url          = $row['media_url'];
+            if (! $row) {
+                // Booking not found
+                return null;
+            }
+
+            $this->booking_no   = $row['booking_no'];
+            $this->c_id         = $row['customer_id'];
+            $this->c_fname      = $row['customer_first_name'];
+            $this->c_lname      = $row['customer_last_name'];
+            $this->d_id         = $row['d_id'];
+            $this->d_fname      = $row['driver_first_name'];
+            $this->d_lname      = $row['driver_last_name'];
+            $this->start_date   = $row['start_date'];
+            $this->end_date     = $row['end_date'];
+            $this->start_time   = $row['start_time'];
+            $this->end_time     = $row['end_time'];
+            $this->driver_fee   = $row['driver_fee'];
+            $this->in_capital   = $row['in_capital'];
+            $this->out_capital  = $row['out_capital'];
+            $this->status       = $row['status'];
+            $this->custom_rate  = $row['custom_rate'];
+            $this->daily_rate   = $row['daily_rate'];
+            $this->cdw_total    = $row['cdw_total'];
+            $this->fuel         = $row['fuel'];
+            $this->total        = $row['total'];
+            $this->vehicle_id   = $row['vehicle_id'];
+            $this->make         = $row['make'];
+            $this->model        = $row['model'];
+            $this->number_plate = $row['number_plate'];
+            $this->ct_status    = $row['signature_status'];
+            $this->agent        = $row['agent'];
+            $this->url          = $row['media_url'];
+        } catch (PDOException $e) {
+            // Bubble up SQL error so the endpoint can handle it
+            throw new Exception("SQL Error in get_booking: " . $e->getMessage());
+        }
+
     }
 
     // get all bookings
@@ -205,23 +218,49 @@ class Booking
     }
 
     // get completed agent bookings for the current month
+    // public function read_agent_complete()
+    // {
+    //     $status = "complete";
+
+    //     try {
+    //         $this->con->beginTransaction();
+
+    //         //create the query
+    //         $query = "SELECT b.id, b.booking_no, c.first_name AS c_fname, c.last_name AS c_lname, v.model, v.make, v.number_plate, v.category_id, b.start_date, b.end_date, b.status, b.total FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id WHERE b.account_id = ? AND b.status = ? AND MONTH(b.start_date) = 11 AND YEAR(b.start_date) = 2025 ORDER BY b.created_at DESC";
+    //         $stmt  = $this->con->prepare($query);
+    //         $stmt->execute([$this->account_id, $status]);
+    //         $this->con->commit();
+    //     } catch (Exception $e) {
+    //         $this->con->rollback();
+    //     }
+
+    //     return $stmt;
+    // }
+
     public function read_agent_complete()
     {
         $status = "complete";
 
         try {
-            $this->con->beginTransaction();
+            $query = "SELECT b.id, b.booking_no, c.first_name AS c_fname, c.last_name AS c_lname,
+                         v.model, v.make, v.number_plate, v.category_id,
+                         b.start_date, b.end_date, b.status, b.total
+                  FROM customer_details c
+                  INNER JOIN bookings b ON c.id = b.customer_id
+                  INNER JOIN vehicle_basics v ON b.vehicle_id = v.id
+                  WHERE b.account_id = ?
+                    AND b.status = ?
+                    AND MONTH(b.start_date) =  11
+                    AND YEAR(b.start_date) = 2025
+                  ORDER BY b.created_at DESC";
 
-            //create the query
-            $query = "SELECT b.id, b.booking_no, c.first_name AS c_fname, c.last_name AS c_lname, v.model, v.make, v.number_plate, v.category_id, b.start_date, b.end_date, b.status, b.total FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id WHERE b.account_id = ? AND b.status = ? AND MONTH(b.start_date) = MONTH(CURDATE()) AND YEAR(b.start_date) = YEAR(CURDATE()) ORDER BY b.created_at DESC";
-            $stmt  = $this->con->prepare($query);
+            $stmt = $this->con->prepare($query);
             $stmt->execute([$this->account_id, $status]);
-            $this->con->commit();
-        } catch (Exception $e) {
-            $this->con->rollback();
+            return $stmt;
+        } catch (PDOException $e) {
+            // Return error details to caller
+            return $e;
         }
-
-        return $stmt;
     }
 
     // get upcoming driver bookings
@@ -318,6 +357,37 @@ class Booking
         }
     }
 
+// calculate and save cdw_total for this booking
+    public function calculate_and_save_cdw($cdw_rate)
+    {
+        try {
+            // Ensure we have start_date and end_date loaded
+            if (empty($this->start_date) || empty($this->end_date)) {
+                throw new Exception("Booking dates not set. Call get_cdw_calc_resources() first.");
+            }
+
+            // Calculate number of days (inclusive)
+            $start = new DateTime($this->start_date);
+            $end   = new DateTime($this->end_date);
+            $days  = $start->diff($end)->days + 1;
+
+            // Calculate cdw_total
+            $this->cdw_total = $days * (float) $cdw_rate;
+
+            // Save cdw_total back to bookings table
+            $sql = "UPDATE {$this->table}
+                   SET cdw_total = ?
+                 WHERE id = ?";
+
+            $stmt    = $this->con->prepare($sql);
+            $success = $stmt->execute([$this->cdw_total, $this->id]);
+
+            return $success;
+
+        } catch (PDOException $e) {
+            throw new Exception("SQL Error in calculate_and_save_cdw: " . $e->getMessage());
+        }
+    }
     // save booking number of a booking
     public function save_booking_video()
     {
@@ -491,6 +561,36 @@ class Booking
         $this->daily_rate   = $row['daily_rate'];
         $this->c_fname      = $row['first_name'];
         $this->c_lname      = $row['last_name'];
+    }
+
+    // get cdw calculation resources: vehicle_id, start_date, end_date
+    public function get_cdw_calc_resources()
+    {
+        try {
+            $query = "SELECT vehicle_id, start_date, end_date
+                  FROM {$this->table}
+                  WHERE id = ?";
+
+            $stmt = $this->con->prepare($query);
+            $stmt->execute([$this->id]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($row) {
+                // Assign directly to Booking object
+                $this->vehicle_id = $row['vehicle_id'];
+                $this->start_date = $row['start_date'];
+                $this->end_date   = $row['end_date'];
+
+                return $row; // return array for external use if needed
+            }
+
+            return false; // no booking found
+
+        } catch (PDOException $e) {
+            // Bubble up error so caller can handle it
+            throw new Exception("SQL Error in get_cdw_calc_resources: " . $e->getMessage());
+        }
+
     }
 
     // update a booking

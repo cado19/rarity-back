@@ -48,6 +48,7 @@ $booking_arr = [
     'fuel'         => $booking->fuel,
     'ct_status'    => $booking->ct_status,
     'daily_rate'   => $booking->daily_rate,
+    'cdw_total'    => $booking->cdw_total,
     'custom_rate'  => $booking->custom_rate,
     'total'        => $booking->total,
     'vehicle_id'   => $booking->vehicle_id,

@@ -525,6 +525,32 @@ class Fleet
         $this->daily_rate = $res['daily_rate'];
     }
 
+    public function get_cdw_rate()
+    {
+        try {
+            $sql = "SELECT cdw_rate
+                 FROM vehicle_pricing
+                 WHERE vehicle_id = ?
+                 LIMIT 1";
+
+            $stmt = $this->con->prepare($sql);
+            $stmt->execute([$this->id]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($row) {
+                $this->cdw_rate = (float) $row['cdw_rate'];
+                return $this->cdw_rate; // return value for external use
+            }
+
+            // No pricing found
+            return null;
+
+        } catch (PDOException $e) {
+            throw new Exception("SQL Error in get_cdw_rate: " . $e->getMessage());
+        }
+
+    }
+
     // get vehicles for new booking
     public function booking_vehicles()
     {
