@@ -20,6 +20,7 @@ $agent = new Agent($db);
 
 if (isset($_GET['id'])) {
     $agent->id = $_GET['id'];
+    // echo json_encode("Agent id: " . $_GET['id']);
 } else {
     die();
 }

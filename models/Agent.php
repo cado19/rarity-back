@@ -40,18 +40,28 @@ class Agent
 
     public function read_single()
     {
-        $sql  = "SELECT a.id AS id, a.name, a.email, a.phone_no, a.country, r.name AS role FROM accounts a INNER JOIN roles r ON a.role_id = r.id WHERE a.id = ?";
+        $sql = "SELECT a.id AS id, a.name, a.email, a.phone_no, a.country, r.name AS role
+             FROM accounts a
+             INNER JOIN roles r ON a.role_id = r.id
+             WHERE a.id = ?";
         $stmt = $this->con->prepare($sql);
         $stmt->execute([$this->id]);
 
-        //fetch the array
-        $row            = $stmt->fetch(PDO::FETCH_ASSOC);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (! $row) {
+            // No agent found
+            return false;
+        }
+
         $this->id       = $row['id'];
         $this->name     = $row['name'];
         $this->email    = $row['email'];
         $this->phone_no = $row['phone_no'];
         $this->country  = $row['country'];
         $this->role     = $row['role'];
+
+        return true;
     }
 
     public function create()

@@ -237,6 +237,7 @@ class Booking
     //     return $stmt;
     // }
 
+    // Get an agent's completed bookings
     public function read_agent_complete()
     {
         $status = "complete";
@@ -250,15 +251,13 @@ class Booking
                   INNER JOIN vehicle_basics v ON b.vehicle_id = v.id
                   WHERE b.account_id = ?
                     AND b.status = ?
-                    AND MONTH(b.start_date) =  11
-                    AND YEAR(b.start_date) = 2025
+                    AND b.start_date BETWEEN ? AND ?
                   ORDER BY b.created_at DESC";
 
             $stmt = $this->con->prepare($query);
-            $stmt->execute([$this->account_id, $status]);
+            $stmt->execute([$this->account_id, $status, $this->start_date, $this->end_date]);
             return $stmt;
         } catch (PDOException $e) {
-            // Return error details to caller
             return $e;
         }
     }

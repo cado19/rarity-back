@@ -1,64 +1,89 @@
 <?php
-// THIS FILE WILL GET BOOKINGS AND CALCULATE COMMISSIONS PER BOOKING IN THE CURRENT MONTH
-
+// THIS FILE CALCULATES AN AGENT'S COMMISSIONS FOR A SPECIFIC TIME PERIOD
 // Headers
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json');
+//header mods for customer request
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Access-Control-Allow-Headers, Access-Control-Allow-Origin, Content-Type, Access-Control-Allow-Methods, Authorization, X-Requested-With');
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 
 // include necessary files
 include_once '../../config/Database.php';
 include_once '../../models/Booking.php';
 include_once '../../models/Agent.php';
 
-// Instantiate The DB and connect to it
+// Instantiate DB and connect
 $database = new Database();
 $db       = $database->connect();
 
-// print_r($db);
-
-// instantiate blog post object
+// instantiate objects
 $booking = new Booking($db);
 $agent   = new Agent($db);
 
-// get the id from the url
+// read JSON input
+$data = json_decode(file_get_contents("php://input"));
 
-if (isset($_GET['agent_id'])) {
-    $booking->account_id = $_GET['agent_id'];
-    $agent->id           = $_GET['agent_id'];
+// validate agent_id
+if (isset($data->agent_id)) {
+    $booking->account_id = $data->agent_id;
+    $agent->id           = $data->agent_id;
 } else {
-    die();
+    echo json_encode([
+        "status"  => "Error",
+        "message" => "Missing agent_id",
+    ]);
+    exit;
 }
+
+// validate date range
+if (isset($data->from) && isset($data->to)) {
+    $booking->start_date = $data->from;
+    $booking->end_date   = $data->to;
+} else {
+                                           // default to current month if not provided
+    $booking->start_date = date('Y-m-01'); // first day of current month
+    $booking->end_date   = date('Y-m-t');  // last day of current month
+}
+
 $response = [];
-// vehicles query as a function
+
+// query for complete bookings of an agent
 $result = $booking->read_agent_complete();
 
-// get row count
-$num = $result->rowCount();
+if ($result instanceof PDOException) {
+    $response['status']  = "Error";
+    $response['message'] = "SQL Error: " . $result->getMessage();
+    echo json_encode($response);
+    exit;
+}
 
-//check if any bookings
+$num = $result->rowCount();
 
 if ($num > 0) {
     $booking_arr             = [];
-    $booking_arr['bookings'] = []; //this is where the data will go
+    $booking_arr['bookings'] = [];
 
     $total_commission = 0;
     while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
         extract($row);
 
-        // in the row there's category_id as a variable and agent->id we can get the commission type and then if it's a percentage calculate the amount.
+        // get commission type and amount for this agent/category
         $agent->category_id = $category_id;
         $agent->get_commission_type_and_amount();
-        $commission = 0;
 
+        $commission = 0;
         if ($agent->commission_type == "percentage") {
-            $commission = ($total * $agent->commission_amount) / 100;
+            $commission        = ($total * $agent->commission_amount) / 100;
             $total_commission += $commission;
         } else {
-            $commission = $agent->commission_amount;
+            $commission        = $agent->commission_amount;
             $total_commission += $commission;
         }
 
-        // single post item array
         $booking_item = [
             'id'         => $id,
             'booking_no' => $booking_no,
@@ -68,24 +93,18 @@ if ($num > 0) {
             'end_date'   => $end_date,
         ];
 
-        // push that post item to 'data' index of array
-        array_push($booking_arr['bookings'], $booking_item);
-
+        $booking_arr['bookings'][] = $booking_item;
     }
-    $message                      = "Successfully fetched recent agent's bookings";
-    $status                       = "Success";
+
     $response['bookings']         = $booking_arr['bookings'];
     $response['total_commission'] = $total_commission;
-    $response['message']          = $message;
-    $response['status']           = $status;
-    // convert the posts to json
-    echo json_encode($response);
-} else {
-    // No posts found in the database ($num = 0)
-    $message             = "Agent has no earnings";
-    $status              = "Error";
-    $response['message'] = $message;
-    $response['status']  = $status;
+    $response['message']          = "Successfully fetched agent's bookings";
+    $response['status']           = "Success";
 
     echo json_encode($response);
+} else {
+    echo json_encode([
+        "status"  => "Error",
+        "message" => "Agent has no earnings",
+    ]);
 }
