@@ -93,7 +93,7 @@ $response = [];
 try {
     // get data from post request (booking id, image, cdw flag)
     $data = json_decode(file_get_contents('php://input'));
-    echo json_encode($data->cdw);
+    // echo json_encode($data->cdw);
 
     $contract->booking_id = $data->id; // set booking id property of contract class
     $contract->contract_to_sign();     // get id of contract from booking id set above
