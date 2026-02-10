@@ -72,6 +72,20 @@ class Contract
         }
     }
 
+    public function set_cdw_status()
+    {
+        $status = "true";
+        $sql = "UPDATE contracts SET cdw = ? WHERE id = ?";
+        $stmt   = $this->con->prepare($sql);
+        if ($stmt->execute([$status, $this->id])) {
+            return true;
+        } else {
+            // print error if something goes wrong
+            printf("Error :  % s . \n ", $stmt->error);
+            return false;
+        }
+    }
+
     // get id of the contract that is to be signed
     public function contract_to_sign()
     {

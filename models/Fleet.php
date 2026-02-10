@@ -34,6 +34,7 @@ class Fleet
     public $refundable_security_deposit;
     public $monthly_target;
     public $cdw_rate;
+    public $cdw_vehicle_excess;
 
     // issue properties
     public $issue_id;
@@ -249,7 +250,8 @@ class Fleet
                        vehicle_excess = ?,
                        refundable_security_deposit = ?,
                        cdw_rate = ?,
-                       monthly_target = ?
+                       monthly_target = ?,
+                       cdw_vehicle_excess = ?
                  WHERE vehicle_id = ?";
 
             $stmt = $this->con->prepare($sql);
@@ -260,6 +262,7 @@ class Fleet
                 $this->refundable_security_deposit,
                 $this->cdw_rate,
                 $this->monthly_target,
+                $this->cdw_vehicle_excess,
                 $this->id,
             ]);
 
@@ -408,7 +411,7 @@ class Fleet
     public function get_vehicle_pricing()
     {
         try {
-            $query = "SELECT id, daily_rate, vehicle_excess, refundable_security_deposit, cdw_rate, monthly_target FROM vehicle_pricing WHERE vehicle_id = ?";
+            $query = "SELECT id, daily_rate, vehicle_excess, refundable_security_deposit, cdw_rate, monthly_target, cdw_vehicle_excess FROM vehicle_pricing WHERE vehicle_id = ?";
             $stmt  = $this->con->prepare($query);
             $stmt->execute([$this->id]);
 
@@ -430,6 +433,7 @@ class Fleet
                 'refundable_security_deposit',
                 'cdw_rate',
                 'monthly_target',
+                'cdw_vehicle_excess',
             ];
 
             foreach ($fields as $field) {

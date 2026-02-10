@@ -31,6 +31,7 @@ $fleet->vehicle_excess              = $data->vehicle_excess;
 $fleet->refundable_security_deposit = $data->refundable_security_deposit;
 $fleet->cdw_rate                    = $data->cdw_rate;
 $fleet->monthly_target              = $data->monthly_target;
+$fleet->cdw_vehicle_excess          = $data->cdw_vehicle_excess;
 
 try {
     $success = $fleet->update_pricing();

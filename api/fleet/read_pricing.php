@@ -42,6 +42,7 @@ try {
         'refundable_security_deposit' => $fleet->refundable_security_deposit,
         'cdw_rate'                    => $fleet->cdw_rate,
         'monthly_target'              => $fleet->monthly_target,
+        'cdw_vehicle_excess'          => $fleet->cdw_vehicle_excess,
     ];
 
     echo json_encode([

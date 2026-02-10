@@ -158,6 +158,8 @@ try {
             throw new Exception("Failed to save CDW total");
         }
 
+        $contract->set_cdw_status(); // update cdw to true in contract's table 
+
     }
 
     $response['status']  = "Success";
