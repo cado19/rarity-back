@@ -94,6 +94,15 @@ class Driver
         return $stmt;
     }
 
+    public function fetch_driver()
+    {
+        $sql = "SELECT id, first_name, last_name, email, password, role_id
+            FROM drivers WHERE email = ? LIMIT 1";
+        $stmt = $this->con->prepare($sql);
+        $stmt->execute([$this->email]);
+        return $stmt;
+    }
+
     public function create()
     {
         $sql = "INSERT INTO drivers

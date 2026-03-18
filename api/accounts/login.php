@@ -53,6 +53,7 @@ if ($num == 0) {
         'name'    => $account->name,
         'email'   => $account->email,
         'role_id' => $account->role_id,
+        'role'    => "agent",
     ];
 
     if (password_verify($data->password, $account->hashed_password)) {
