@@ -7,7 +7,7 @@ class Driver
     private $con;
     private $table = "drivers";
 
-    // Customer properties
+    // Driver properties
     public $id;
     public $first_name;
     public $last_name;
@@ -26,6 +26,11 @@ class Driver
     public $profile_image;
     public $license_image;
     public $created_at;
+
+    // Delivery properties
+    public $booking_id;
+    public $delivered_at;
+    public $delivered; // delivered status 'true' / 'false'
 
     // Constructor with DB
     public function __construct($db)
@@ -152,6 +157,36 @@ class Driver
         $stmt = $this->con->prepare($sql);
         $stmt->execute();
 
+        return $stmt;
+    }
+
+    // ---------------------------------------- DELIVERY FUNCTIONS  ----------------------------------------
+    // create delivery
+    public function upsert_delivery()
+    {
+        try {
+            $sql = "
+          INSERT INTO deliveries (booking_id, driver_id)
+          VALUES (:booking_id, :driver_id)
+          ON DUPLICATE KEY UPDATE driver_id = VALUES(driver_id)
+        ";
+            $stmt = $this->con->prepare($sql);
+            $stmt->execute([
+                ':booking_id' => $this->booking_id,
+                ':driver_id'  => $this->id,
+            ]);
+            return true;
+        } catch (PDOException $e) {
+            throw new Exception("Error creating/updating delivery: " . $e->getMessage());
+        }
+    }
+
+    public function read_deliveries()
+    {
+        $status = 'false';
+        $sql    = "SELECT * FROM deliveries WHERE delivered = ?";
+        $stmt   = $this->con->prepare($sql);
+        $stmt->execute();
         return $stmt;
     }
 }
