@@ -9,9 +9,10 @@ class Booking
     // Booking properties
     public $id;
     public $booking_no;
-    public $c_id;    //customer_id
-    public $c_fname; //customer_first_name
-    public $c_lname; //customer_last_name
+    public $c_id;     //customer_id
+    public $c_fname;  //customer_first_name
+    public $c_lname;  //customer_last_name
+    public $phone_no; //customer_last_name
     public $d_id;
     public $d_fname; //driver_first_name
     public $d_lname; //driver_last_name
@@ -51,7 +52,7 @@ class Booking
     public function read_single()
     {
         try {
-            $sql  = "SELECT a.name AS agent, c.id AS customer_id, c.first_name AS customer_first_name, c.last_name AS customer_last_name, v.id AS vehicle_id, v.model, v.make, v.number_plate, v.drive_train, cat.name AS category, v.seats, vp.daily_rate, d.id AS d_id, d.first_name AS driver_first_name, d.last_name AS driver_last_name, b.start_date, b.end_date, b.start_time, b.end_time, b.total, b.cdw_total, b.driver_fee, b.in_capital, b.out_capital, b.status, b.fuel, b.booking_no, b.custom_rate, b.media_url, ct.status AS signature_status FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN accounts a ON b.account_id = a.id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id INNER JOIN vehicle_pricing vp ON b.vehicle_id = vp.vehicle_id INNER JOIN contracts ct ON b.id = ct.booking_id INNER JOIN vehicle_categories cat ON v.category_id = cat.id INNER JOIN drivers d ON b.driver_id = d.id WHERE b.id = ?";
+            $sql  = "SELECT a.name AS agent, c.id AS customer_id, c.first_name AS customer_first_name, c.last_name AS customer_last_name, c.phone_no AS phone_no, v.id AS vehicle_id, v.model, v.make, v.number_plate, v.drive_train, cat.name AS category, v.seats, vp.daily_rate, d.id AS d_id, d.first_name AS driver_first_name, d.last_name AS driver_last_name, b.start_date, b.end_date, b.start_time, b.end_time, b.total, b.cdw_total, b.driver_fee, b.in_capital, b.out_capital, b.status, b.fuel, b.booking_no, b.custom_rate, b.media_url, ct.status AS signature_status FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN accounts a ON b.account_id = a.id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id INNER JOIN vehicle_pricing vp ON b.vehicle_id = vp.vehicle_id INNER JOIN contracts ct ON b.id = ct.booking_id INNER JOIN vehicle_categories cat ON v.category_id = cat.id INNER JOIN drivers d ON b.driver_id = d.id WHERE b.id = ?";
             $stmt = $this->con->prepare($sql);
             $stmt->execute([$this->id]);
 
@@ -67,6 +68,7 @@ class Booking
             $this->c_id         = $row['customer_id'];
             $this->c_fname      = $row['customer_first_name'];
             $this->c_lname      = $row['customer_last_name'];
+            $this->phone_no     = $row['phone_no'];
             $this->d_id         = $row['d_id'];
             $this->d_fname      = $row['driver_first_name'];
             $this->d_lname      = $row['driver_last_name'];
@@ -126,7 +128,7 @@ class Booking
             $this->con->beginTransaction();
 
             //create the query
-            $query = "SELECT b.id, b.booking_no, c.id AS customer_id, c.first_name AS c_fname, c.last_name AS c_lname, v.model, v.make, v.number_plate, b.start_date, b.end_date, b.status, a.id AS agent_id FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id INNER JOIN accounts a ON b.account_id = a.id WHERE b.status = ? ORDER BY b.created_at DESC";
+            $query = "SELECT b.id, b.booking_no, c.id AS customer_id, c.first_name AS c_fname, c.last_name AS c_lname, b.driver_id, v.model, v.make, v.number_plate, b.start_date, b.end_date, b.status, a.id AS agent_id FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id INNER JOIN accounts a ON b.account_id = a.id WHERE b.status = ? ORDER BY b.created_at DESC";
             $stmt  = $this->con->prepare($query);
             $stmt->execute([$status]);
             $this->con->commit();
@@ -146,7 +148,7 @@ class Booking
             $this->con->beginTransaction();
 
             //create the query
-            $query = "SELECT b.id, b.booking_no, c.id AS customer_id, c.first_name AS c_fname, c.last_name AS c_lname, v.model, v.make, v.number_plate, b.start_date, b.end_date, b.status, a.id AS agent_id FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id INNER JOIN accounts a ON b.account_id = a.id WHERE b.status = ? ORDER BY b.created_at DESC";
+            $query = "SELECT b.id, b.booking_no, c.id AS customer_id, c.first_name AS c_fname, c.last_name AS c_lname, b.driver_id, v.model, v.make, v.number_plate, b.start_date, b.end_date, b.status, a.id AS agent_id FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id INNER JOIN accounts a ON b.account_id = a.id WHERE b.status = ? ORDER BY b.created_at DESC";
             $stmt  = $this->con->prepare($query);
             $stmt->execute([$status]);
             $this->con->commit();

@@ -34,6 +34,7 @@ $booking_arr = [
     'customer_id'  => $booking->c_id,
     'c_fname'      => $booking->c_fname,
     'c_lname'      => $booking->c_lname,
+    'phone_no'     => $booking->phone_no,
     'driver_id'    => $booking->d_id,
     'd_fname'      => $booking->d_fname,
     'd_lname'      => $booking->d_lname,

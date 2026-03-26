@@ -181,12 +181,18 @@ class Driver
         }
     }
 
-    public function read_deliveries()
+    public function read_deliveries($driverId)
     {
-        $status = 'false';
-        $sql    = "SELECT * FROM deliveries WHERE delivered = ?";
-        $stmt   = $this->con->prepare($sql);
-        $stmt->execute();
+        $query = "SELECT d.id, d.booking_id, d.driver_id, d.delivered, d.delivered_at,
+                     b.booking_no, b.customer_id, b.start_date, b.end_date
+              FROM deliveries d
+              INNER JOIN bookings b ON d.booking_id = b.id
+              WHERE d.driver_id = ? AND d.delivered = 'false'
+              ORDER BY d.created_at DESC";
+
+        $stmt = $this->con->prepare($query);
+        $stmt->execute([$driverId]);
+
         return $stmt;
     }
 }
