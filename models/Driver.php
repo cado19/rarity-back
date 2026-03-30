@@ -195,4 +195,11 @@ class Driver
 
         return $stmt;
     }
+
+    public function complete_delivery($booking_id)
+    {
+        $query = "UPDATE deliveries SET delivered = 'true', delivered_at = NOW() WHERE booking_id = ?";
+        $stmt  = $this->con->prepare($query);
+        return $stmt->execute([$booking_id]);
+    }
 }
