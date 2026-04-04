@@ -25,7 +25,9 @@ class Booking
     public $daily_rate;
     public $custom_rate;
     public $total;
+    public $subtotal;
     public $cdw_total;
+    public $vat;
     public $make;
     public $model;
     public $vehicle_id;
@@ -280,8 +282,8 @@ class Booking
     {
         $status = "upcoming";
         $sql    = "INSERT INTO bookings
-        (customer_id, vehicle_id, driver_id, start_date, end_date, start_time, end_time, custom_rate, total, account_id, status, in_capital, out_capital, driver_fee)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        (customer_id, vehicle_id, driver_id, start_date, end_date, start_time, end_time, custom_rate, total, account_id, status, in_capital, out_capital, driver_fee, vat, subtotal)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
         $stmt = $this->con->prepare($sql);
 
@@ -300,6 +302,8 @@ class Booking
             $this->in_capital,
             $this->out_capital,
             $this->driver_fee,
+            $this->vat,
+            $this->subtotal,
         ])) {
             $this->id = $this->con->lastInsertId();
             return true;

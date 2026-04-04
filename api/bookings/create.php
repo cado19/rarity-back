@@ -62,6 +62,19 @@ if (! empty($data['custom_rate']) && $data['custom_rate'] > 0) {
     $booking->total       = $fleet->daily_rate * $duration;
 }
 
+// After calculating base total
+$booking->subtotal = $booking->total; // store base amount
+
+// VAT calculation
+$applyVAT = ! empty($data['vat']) && $data['vat'] === true;
+if ($applyVAT) {
+    $booking->vat   = round($booking->subtotal * 0.16, 2); // 16% VAT
+    $booking->total = $booking->subtotal + $booking->vat;  // grand total
+} else {
+    $booking->vat   = 0;
+    $booking->total = $booking->subtotal; // no VAT applied
+}
+
 // Driver fee
 if ($booking->d_id == 8) {
     $booking->driver_fee = 0;
