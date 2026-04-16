@@ -12,6 +12,8 @@ class Driver
     public $first_name;
     public $last_name;
     public $email;
+    public $password;        // password that comes from the user
+    public $hashed_password; // password that comes from the db
     public $id_type;
     public $id_no;
     public $phone_no;
@@ -125,6 +127,13 @@ class Driver
         }
 
     }
+
+    public function update_password() {
+        $sql = "UPDATE drivers SET password = ? WHERE id = ?";
+        $stmt = $this->con->prepare($sql);
+        return $stmt->execute([$this->hashed_password, $this->id]);
+    }
+
 
     public function update_rate()
     {
