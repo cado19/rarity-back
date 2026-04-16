@@ -43,6 +43,16 @@ class Fleet
     public $resolution_cost;
     public $resolution_date;
 
+    // work order properties
+    public $work_order_id;
+    public $work_order_title;
+    public $work_order_description;
+    public $work_order_scheduled_date;
+    public $work_order_labor_cost;
+    public $work_order_parts_cost;
+    public $work_order_total_cost;
+    public $work_order_assigned_to;
+
     // extras properties
     public $extras_id;
     public $bluetooth;
@@ -343,6 +353,52 @@ class Fleet
         }
     }
 
+    public function update_rate()
+    {
+        $sql  = "UPDATE vehicle_pricing SET daily_rate = ? WHERE vehicle_id = ?";
+        $stmt = $this->con->prepare($sql);
+        if ($stmt->execute([$this->daily_rate, $this->id])) {
+            return true;
+        } else {
+            // print error if something goes wrong
+            printf("Error: %s.\n", $stmt->error);
+            return false;
+        }
+
+    }
+
+    // function to delete a vehicle
+    public function delete_vehicle()
+    {
+        $deleted = "true";
+        $sql     = "UPDATE vehicle_basics SET deleted = ? WHERE id = ?";
+        $stmt    = $this->con->prepare($sql);
+        if ($stmt->execute([$deleted, $this->id])) {
+            return true;
+        } else {
+            // print error if something goes wrong
+            printf("Error: %s.\n", $stmt->error);
+            return false;
+        }
+    }
+
+    // function to restore a vehicle
+    public function restore_vehicle()
+    {
+        $deleted = "false";
+        $sql     = "UPDATE vehicle_basics SET deleted = ? WHERE id = ?";
+        $stmt    = $this->con->prepare($sql);
+        if ($stmt->execute([$deleted, $this->id])) {
+            return true;
+        } else {
+            // print error if something goes wrong
+            printf("Error: %s.\n", $stmt->error);
+            return false;
+        }
+    }
+
+    //  ---------------------------------------- GENERAL VEHICLE READ FUNCTIONS ----------------------------------------
+
     // function to get the ids of a vehicle with a numbler plate like the onw given.
     public function check_unique_number_plate()
     {
@@ -587,7 +643,64 @@ class Fleet
         return $stmt;
     }
 
-    // VEHICLE ISSUES FUNCTIONS
+    // count the total number of vehicles
+    public function vehicle_count()
+    {
+        $sql  = "SELECT id FROM vehicle_basics";
+        $stmt = $this->con->prepare($sql);
+        $stmt->execute();
+        return $stmt;
+    }
+
+    //count the total number of vehicles actively out there (active booking)
+    public function active_vehicles()
+    {
+        $status = "active";
+        $sql    = "SELECT vehicle_id FROM bookings WHERE status = ?";
+        $stmt   = $this->con->prepare($sql);
+        $stmt->execute([$status]);
+        return $stmt;
+
+    }
+    //count the total number of vehicles reserved  (upcoming booking)
+    public function reserved_vehicles()
+    {
+        $status = "upcoming";
+        $sql    = "SELECT vehicle_id FROM bookings WHERE status = ?";
+        $stmt   = $this->con->prepare($sql);
+        $stmt->execute([$status]);
+        return $stmt;
+
+    }
+
+    public function deleted_vehicles()
+    {
+        $deleted = "true";
+        $sql     = "SELECT c.name AS category_name, v.id, v.category_id, v.make, v.model, v.number_plate, v.created_at, vp.daily_rate FROM vehicle_basics v INNER JOIN vehicle_categories c ON v.category_id = c.id INNER JOIN vehicle_pricing vp ON v.id = vp.vehicle_id WHERE v.deleted = ?";
+        $stmt    = $this->con->prepare($sql);
+        $stmt->execute([$deleted]);
+        return $stmt;
+    }
+
+    //get bookings ending today
+    public function due_out_count()
+    {
+        $sql  = "SELECT id FROM bookings WHERE DATE(end_date) = CURRENT_DATE";
+        $stmt = $this->con->prepare($sql);
+        $stmt->execute();
+        return $stmt;
+    }
+
+    // get all vehicle ids in a given category
+    public function vehicles_in_category()
+    {
+        $sql  = "SELECT id FROM vehicle_basics WHERE category_id = ?";
+        $stmt = $this->con->prepare($sql);
+        $stmt->execute([$this->category_id]);
+        return $stmt;
+    }
+
+    //  ---------------------------------------- VEHICLE ISSUES FUNCTIONS ----------------------------------------
     public function read_issues()
     {
         $sql  = "SELECT vb.make, vb.model, vb.number_plate, vi.id, vi.title, vi.resolution_cost, vi.status, vi.created_at FROM vehicle_issues vi INNER JOIN vehicle_basics vb ON vi.vehicle_id = vb.id ORDER BY created_at DESC";
@@ -630,104 +743,251 @@ class Fleet
         }
     }
 
-    public function update_rate()
-    {
-        $sql  = "UPDATE vehicle_pricing SET daily_rate = ? WHERE vehicle_id = ?";
-        $stmt = $this->con->prepare($sql);
-        if ($stmt->execute([$this->daily_rate, $this->id])) {
-            return true;
-        } else {
-            // print error if something goes wrong
-            printf("Error: %s.\n", $stmt->error);
-            return false;
-        }
+    // ---------------------------------------- WORK ORDER FUNCTIONS  ----------------------------------------
 
-    }
-    // count the total number of vehicles
-    public function vehicle_count()
+    public function create_work_order($items)
     {
-        $sql  = "SELECT id FROM vehicle_basics";
-        $stmt = $this->con->prepare($sql);
-        $stmt->execute();
-        return $stmt;
-    }
+        try {
+            $this->con->beginTransaction();
 
-    //count the total number of vehicles actively out there (active booking)
-    public function active_vehicles()
-    {
-        $status = "active";
-        $sql    = "SELECT vehicle_id FROM bookings WHERE status = ?";
-        $stmt   = $this->con->prepare($sql);
-        $stmt->execute([$status]);
-        return $stmt;
+            // Insert base work order
+            $sql = "INSERT INTO work_orders
+            (vehicle_id, title, description, status, scheduled_date, labor_cost, parts_cost, total_cost)
+            VALUES (?, ?, ?, 'open', ?, ?, ?, 0)";
+            $stmt = $this->con->prepare($sql);
+            $stmt->execute([$this->id, $this->work_order_title, $this->work_order_description, $this->work_order_scheduled_date, $this->work_order_labor_cost, $this->work_order_parts_cost]);
 
-    }
-    //count the total number of vehicles reserved  (upcoming booking)
-    public function reserved_vehicles()
-    {
-        $status = "upcoming";
-        $sql    = "SELECT vehicle_id FROM bookings WHERE status = ?";
-        $stmt   = $this->con->prepare($sql);
-        $stmt->execute([$status]);
-        return $stmt;
+            $workOrderId = $this->con->lastInsertId();
 
-    }
+            // Generate work_order_number based on ID
+            $workOrderNumber = "WO-" . str_pad($workOrderId, 3, "0", STR_PAD_LEFT);
+            $updateNumber    = $this->con->prepare("UPDATE work_orders SET work_order_number = ? WHERE id = ?");
+            $updateNumber->execute([$workOrderNumber, $workOrderId]);
 
-    // function to delete a vehicle
-    public function delete_vehicle()
-    {
-        $deleted = "true";
-        $sql     = "UPDATE vehicle_basics SET deleted = ? WHERE id = ?";
-        $stmt    = $this->con->prepare($sql);
-        if ($stmt->execute([$deleted, $this->id])) {
-            return true;
-        } else {
-            // print error if something goes wrong
-            printf("Error: %s.\n", $stmt->error);
-            return false;
+            // Handle items (can be empty)
+            $subtotal = 0;
+            if (! empty($items)) {
+                $itemStmt = $this->con->prepare("INSERT INTO work_order_items (work_order_id, item, cost, quantity) VALUES (?, ?, ?, ?)");
+                foreach ($items as $item) {
+                    $itemStmt->execute([$workOrderId, $item['item'], $item['cost'], $item['quantity']]);
+                    $subtotal += $item['cost'] * $item['quantity'];
+                }
+            }
+
+            // Grand total = subtotal + labor + parts
+            $grandTotal  = $subtotal + $this->work_order_labor_cost + $this->work_order_parts_cost;
+
+            // Update totals
+            $updateTotals = $this->con->prepare("UPDATE work_orders SET total_cost = ? WHERE id = ?");
+            $updateTotals->execute([$grandTotal, $workOrderId]);
+
+            $this->con->commit();
+
+            return [
+                "status"            => "Success",
+                "message"           => "Work order created successfully",
+                "work_order_id"     => $workOrderId,
+                "work_order_number" => $workOrderNumber,
+                "subtotal"          => $subtotal,
+                "grand_total"       => $grandTotal,
+            ];
+        } catch (Exception $e) {
+            $this->con->rollBack();
+            return ["status" => "Error", "message" => $e->getMessage()];
         }
     }
 
-    // function to delete a vehicle
-    public function restore_vehicle()
+    public function list_work_orders($status = null, $vehicleId = null)
     {
-        $deleted = "false";
-        $sql     = "UPDATE vehicle_basics SET deleted = ? WHERE id = ?";
-        $stmt    = $this->con->prepare($sql);
-        if ($stmt->execute([$deleted, $this->id])) {
-            return true;
-        } else {
-            // print error if something goes wrong
-            printf("Error: %s.\n", $stmt->error);
-            return false;
+        try {
+            // Base query
+            $sql = "SELECT
+                    wo.id,
+                    wo.work_order_number,
+                    wo.vehicle_id,
+                    vb.make,
+                    vb.model,
+                    vb.number_plate,
+                    wo.title,
+                    wo.description,
+                    wo.status,
+                    wo.scheduled_date,
+                    wo.completion_date,
+                    wo.labor_cost,
+                    wo.parts_cost,
+                    wo.total_cost,
+                    wo.assigned_to,
+                    wo.approved_by,
+                    wo.created_at
+                FROM work_orders wo
+                INNER JOIN vehicle_basics vb ON wo.vehicle_id = vb.id
+                WHERE wo.deleted = 'false'";
+
+            $params = [];
+
+            // Optional filters
+            if (! empty($status)) {
+                $sql      .= " AND wo.status = ?";
+                $params[]  = $status;
+            }
+
+            if (! empty($vehicleId)) {
+                $sql      .= " AND wo.vehicle_id = ?";
+                $params[]  = $vehicleId;
+            }
+
+            $sql .= " ORDER BY wo.created_at DESC";
+
+            $stmt = $this->con->prepare($sql);
+            $stmt->execute($params);
+
+            $workOrders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            return [
+                "status"      => "Success",
+                "count"       => count($workOrders),
+                "work_orders" => $workOrders,
+            ];
+        } catch (Exception $e) {
+            return ["status" => "Error", "message" => $e->getMessage()];
         }
     }
 
-    public function deleted_vehicles()
+    public function read_work_order_with_items()
     {
-        $deleted = "true";
-        $sql     = "SELECT c.name AS category_name, v.id, v.category_id, v.make, v.model, v.number_plate, v.created_at, vp.daily_rate FROM vehicle_basics v INNER JOIN vehicle_categories c ON v.category_id = c.id INNER JOIN vehicle_pricing vp ON v.id = vp.vehicle_id WHERE v.deleted = ?";
-        $stmt    = $this->con->prepare($sql);
-        $stmt->execute([$deleted]);
-        return $stmt;
+        // Fetch the work order itself
+        $sql = "SELECT
+                wo.id,
+                wo.work_order_number,
+                wo.vehicle_id,
+                vb.make,
+                vb.model,
+                vb.number_plate,
+                wo.title,
+                wo.description,
+                wo.status,
+                wo.scheduled_date,
+                wo.completion_date,
+                wo.labor_cost,
+                wo.parts_cost,
+                wo.total_cost,
+                wo.assigned_to,
+                wo.approved_by,
+                wo.created_at
+            FROM work_orders wo
+            INNER JOIN vehicle_basics vb ON wo.vehicle_id = vb.id
+            WHERE wo.id = ? AND wo.deleted = 'false'
+            LIMIT 1";
+
+        $stmt = $this->con->prepare($sql);
+        $stmt->execute([$this->work_order_id]);
+        $workOrder = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (! $workOrder) {
+            return ["status" => "Error", "message" => "Work order not found"];
+        }
+
+        // Fetch items linked to this work order
+        $itemSql = "SELECT id, item, cost, quantity
+                FROM work_order_items
+                WHERE work_order_id = ?";
+        $itemStmt = $this->con->prepare($itemSql);
+        $itemStmt->execute([$this->work_order_id]);
+        $items = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Return combined result
+        return [
+            "status"     => "Success",
+            "work_order" => $workOrder,
+            "items"      => $items,
+        ];
     }
 
-    //get bookings ending today
-    public function due_out_count()
+    public function update_work_order($items)
     {
-        $sql  = "SELECT id FROM bookings WHERE DATE(end_date) = CURRENT_DATE";
-        $stmt = $this->con->prepare($sql);
-        $stmt->execute();
-        return $stmt;
+        try {
+            $this->con->beginTransaction();
+
+            // Update base work order fields
+            $sql = "UPDATE work_orders
+                SET title = ?,
+                    description = ?,
+                    status = ?,
+                    scheduled_date = ?,
+                    completion_date = ?,
+                    labor_cost = ?,
+                    parts_cost = ?
+                WHERE id = ?";
+            $stmt = $this->con->prepare($sql);
+            $stmt->execute([
+                $this->work_order_title,
+                $this->work_order_description,
+                $this->work_order_status, // new property you’ll set before calling
+                $this->work_order_scheduled_date,
+                $this->work_order_completion_date, // optional, can be null
+                $this->work_order_labor_cost,
+                $this->work_order_parts_cost,
+                $this->work_order_id,
+            ]);
+
+            // Reset items (optional: you could also patch instead of replace)
+            $deleteItems = $this->con->prepare("DELETE FROM work_order_items WHERE work_order_id = ?");
+            $deleteItems->execute([$this->work_order_id]);
+
+            // Re‑insert items if provided
+            $subtotal = 0;
+            if (! empty($items)) {
+                $itemStmt = $this->con->prepare("INSERT INTO work_order_items (work_order_id, item, cost, quantity) VALUES (?, ?, ?, ?)");
+                foreach ($items as $item) {
+                    $itemStmt->execute([$this->work_order_id, $item['item'], $item['cost'], $item['quantity']]);
+                    $subtotal += $item['cost'] * $item['quantity'];
+                }
+            }
+
+            // Grand total = subtotal + labor + parts
+            $grandTotal  = $subtotal + $this->work_order_labor_cost + $this->work_order_parts_cost;
+
+            // Update totals
+            $updateTotals = $this->con->prepare("UPDATE work_orders SET total_cost = ? WHERE id = ?");
+            $updateTotals->execute([$grandTotal, $this->work_order_id]);
+
+            $this->con->commit();
+
+            return [
+                "status"        => "Success",
+                "message"       => "Work order updated successfully",
+                "work_order_id" => $this->work_order_id,
+                "subtotal"      => $subtotal,
+                "grand_total"   => $grandTotal,
+            ];
+        } catch (Exception $e) {
+            $this->con->rollBack();
+            return ["status" => "Error", "message" => $e->getMessage()];
+        }
     }
 
-    // get all vehicle ids in a given category
-    public function vehicles_in_category()
+    public function delete_work_order()
     {
-        $sql  = "SELECT id FROM vehicle_basics WHERE category_id = ?";
-        $stmt = $this->con->prepare($sql);
-        $stmt->execute([$this->category_id]);
-        return $stmt;
+        try {
+            $sql  = "UPDATE work_orders SET deleted = 'true' WHERE id = ?";
+            $stmt = $this->con->prepare($sql);
+            $stmt->execute([$this->work_order_id]);
+
+            if ($stmt->rowCount() > 0) {
+                return [
+                    "status"        => "Success",
+                    "message"       => "Work order deleted successfully",
+                    "work_order_id" => $this->work_order_id,
+                ];
+            } else {
+                return [
+                    "status"  => "Error",
+                    "message" => "Work order not found or already deleted",
+                ];
+            }
+        } catch (Exception $e) {
+            return ["status" => "Error", "message" => $e->getMessage()];
+        }
     }
 
 }
