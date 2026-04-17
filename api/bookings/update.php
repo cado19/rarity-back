@@ -61,9 +61,13 @@ $account->id = $data->account_id;
 $driver->id = $data->driver_id;
 
 // get the duration of the booking
-$start_date = strtotime($data->start_date);
-$end_date   = strtotime($data->end_date);
-$duration   = ($end_date - $start_date) / 86400;
+$duration = Booking::calculateDuration(
+    $booking->start_date,
+    $booking->start_time,
+    $booking->end_date,
+    $booking->end_time,
+    ! empty($data['override']) && $data['override'] === true
+);
 
 $response = [];
 

@@ -508,6 +508,7 @@ class Booking
         $this->vehicle_id = $row['vehicle_id'];
     }
 
+    // get a voucher details
     public function get_voucher_details()
     {
         $sql = "SELECT b.id, b.booking_no, b.custom_rate, b.total, b.start_date, b.start_time, b.end_date, b.end_time, b.created_at, vb.make, vb.model, vb.number_plate, vp.daily_rate, c.first_name, c.last_name FROM bookings b INNER JOIN vehicle_basics vb ON b.vehicle_id = vb.id INNER JOIN customer_details c ON b.customer_id = c.id INNER JOIN vehicle_pricing vp ON b.vehicle_id = vp.vehicle_id WHERE b.id = ?";
@@ -608,6 +609,7 @@ class Booking
 
     }
 
+    // when a vehicle has been changed in the calendar dashboard
     public function update_dash_vehicle()
     {
         $sql  = "UPDATE bookings SET vehicle_id = ?, start_date = ?, end_date = ?, total = ? WHERE id = ?";
@@ -617,6 +619,33 @@ class Booking
         } else {
             return false;
         }
+    }
+
+    // function to calculate the duration of a booking
+    public static function calculateDuration($start_date, $start_time, $end_date, $end_time, $override = false)
+    {
+        $startDateTime = strtotime("$start_date $start_time");
+        $endDateTime   = strtotime("$end_date $end_time");
+
+        // Base day difference
+        $days = floor(($endDateTime - $startDateTime) / 86400);
+
+        // Expected end datetime if exactly $days later at same start time
+        $expectedEnd = strtotime("+{$days} days", $startDateTime);
+
+        // Allowance window (+2 hours)
+        $allowanceEnd = $expectedEnd + (2 * 3600);
+
+        $extraDay = 0;
+        if ($endDateTime > $allowanceEnd) {
+            $extraDay = 1;
+        }
+
+        if ($override) {
+            $extraDay = 0;
+        }
+
+        return $days + $extraDay;
     }
 
 }

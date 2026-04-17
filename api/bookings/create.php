@@ -34,10 +34,13 @@ $booking->account_id  = $data['account_id'];
 $booking->in_capital  = $data['in_capital'];
 $booking->out_capital = $data['out_capital'];
 
-// Calculate duration
-$start_date = strtotime($booking->start_date);
-$end_date   = strtotime($booking->end_date);
-$duration   = $data['oneday'] ? 1 : (($end_date - $start_date) / 86400);
+$duration = Booking::calculateDuration(
+    $booking->start_date,
+    $booking->start_time,
+    $booking->end_date,
+    $booking->end_time,
+    ! empty($data['override']) && $data['override'] === true
+);
 
 // Handle custom rate vs daily rate
 if (! empty($data['custom_rate']) && $data['custom_rate'] > 0) {
