@@ -612,14 +612,21 @@ class Fleet
     }
 
     // get vehicles for new booking
-    public function booking_vehicles()
+// models/Fleet.php
+
+// get vehicles for new booking with pricing
+    public function booking_vehicles_with_pricing()
     {
         $status = "false";
 
         try {
             $this->con->beginTransaction();
-            $query = "SELECT id, make, model, number_plate FROM vehicle_basics WHERE deleted = ? AND partner_id IS NULL ORDER BY id DESC";
-            $stmt  = $this->con->prepare($query);
+            $query = "SELECT vb.id, vb.make, vb.model, vb.number_plate, vp.daily_rate
+                  FROM vehicle_basics vb
+                  LEFT JOIN vehicle_pricing vp ON vb.id = vp.vehicle_id
+                  WHERE vb.deleted = ? AND vb.partner_id IS NULL
+                  ORDER BY vb.id DESC";
+            $stmt = $this->con->prepare($query);
             $stmt->execute([$status]);
             $this->con->commit();
         } catch (Exception $e) {

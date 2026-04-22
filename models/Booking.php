@@ -564,36 +564,41 @@ class Booking
     }
 
     // update a booking
-    public function update_booking_details()
+
+    public function update()
     {
+        $sql = "UPDATE bookings
+            SET vehicle_id = ?,
+                customer_id = ?,
+                driver_id = ?,
+                start_date = ?,
+                end_date = ?,
+                start_time = ?,
+                end_time = ?,
+                custom_rate = ?,
+                subtotal = ?,
+                vat = ?,
+                total = ?,
+                driver_fee = ?
+            WHERE id = ?";
 
-        $sql  = "UPDATE bookings SET vehicle_id = ?, customer_id = ?, driver_id = ?, start_date = ?, end_date = ?, start_time = ?, end_time = ?, custom_rate = ?, total = ? WHERE id = ?";
         $stmt = $this->con->prepare($sql);
-        if ($stmt->execute([$this->vehicle_id, $this->c_id, $this->d_id, $this->start_date, $this->end_date, $this->start_time, $this->end_time, $this->custom_rate, $this->total, $this->id])) {
-            $this->id = $this->con->lastInsertId();
-            return true;
-        } else {
-            // print error if something goes wrong
-            printf("Error :  % s . \n ", $stmt->error);
-            return false;
-        }
 
-    }
-
-    // update a booking with a custom rate
-    public function custom_booking_update()
-    {
-
-        $sql  = "UPDATE bookings SET vehicle_id = ?, customer_id = ?, driver_id = ?, start_date = ?, end_date = ?, start_time = ?, end_time = ?, custom_rate = ?, total = ? WHERE id = ?";
-        $stmt = $this->con->prepare($sql);
-        if ($stmt->execute([$this->vehicle_id, $this->c_id, $this->d_id, $this->start_date, $this->end_date, $this->start_time, $this->end_time, $this->custom_rate, $this->total, $this->id])) {
-            $this->id = $this->con->lastInsertId();
-            return true;
-        } else {
-            // print error if something goes wrong
-            printf("Error :  % s . \n ", $stmt->error);
-            return false;
-        }
+        return $stmt->execute([
+            $this->vehicle_id,
+            $this->c_id,
+            $this->d_id,
+            $this->start_date,
+            $this->end_date,
+            $this->start_time,
+            $this->end_time,
+            $this->custom_rate,
+            $this->subtotal,
+            $this->vat,
+            $this->total,
+            $this->driver_fee,
+            $this->id,
+        ]);
     }
 
     // when an event in the dashboard has been dragged
