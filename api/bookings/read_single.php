@@ -57,6 +57,8 @@ $booking_arr = [
     'model'        => $booking->model,
     'number_plate' => $booking->number_plate,
     'agent'        => $booking->agent,
+    'override'     => $booking->override,
+    'duration'     => $booking->duration,
     'url'          => $booking->url,
 ];
 $status  = "Success";
