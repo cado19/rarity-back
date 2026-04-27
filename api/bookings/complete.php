@@ -1,42 +1,41 @@
 <?php
-// THIS FILE WILL DELIVER HANDLE BOOKING COMPLETION
 
-// Headers
-header('Access-Control-Allow-Origin: *');
-header('Content-Type: application/json');
-//header mods for customer request
-header('Access-Control-Allow-Methods: POST');
-header('Access-Control-Allow-Headers: Access-Control-Allow-Headers, Access-Control-Allow-Origin, Content-Type, Access-Control-Allow-Methods, Authorization, X-Requested-With');
-
-// include necessary files
 include_once '../../config/Database.php';
+include_once '../../config/cors.php';
 include_once '../../models/Booking.php';
+include_once '../../models/Fleet.php';
 
-// Instantiate The DB and connect to it
 $database = new Database();
 $db       = $database->connect();
 
 $booking = new Booking($db);
 
-// get id from url params
-if (isset($_GET['id'])) {
-    $booking->id = $_GET['id'];
-} else {
-    die();
-}
+// Read JSON body
+$data = json_decode(file_get_contents("php://input"));
 
 $response = [];
 
-if ($booking->complete_booking()) {
-    $message             = "Successfully completed booking";
-    $status              = "Success";
-    $response['status']  = $status;
-    $response['message'] = $message;
-    echo json_encode($response);
-} else {
-    $message             = "An error occured";
-    $status              = "Error";
-    $response['status']  = $status;
-    $response['message'] = $message;
-    echo json_encode($response);
+try {
+    if (! isset($data->id)) {
+        throw new Exception("Missing booking id");
+    }
+    if (! isset($data->mileage)) {
+        throw new Exception("Mileage is required");
+    }
+
+    $booking->id         = intval($data->id);
+    $booking->vehicle_id = intval($data->vehicle_id ?? 0); // ensure vehicle_id is passed or fetched
+    $booking->mileage    = intval($data->mileage);
+
+    if ($booking->complete_booking_with_mileage()) {
+        $response['status']  = "Success";
+        $response['message'] = "Successfully completed booking and logged mileage";
+    } else {
+        throw new Exception("Booking completion failed");
+    }
+} catch (Exception $e) {
+    $response['status']  = "Error";
+    $response['message'] = $e->getMessage();
 }
+
+echo json_encode($response);

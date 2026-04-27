@@ -419,6 +419,7 @@ class Fleet
         $stmt->execute([$this->id]);
         return $stmt;
     }
+
     // function to get the basics of a vehicle based on its id
     public function get_vehicle_base()
     {
@@ -429,39 +430,22 @@ class Fleet
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (! $row) {
-                // No extras found for this vehicle
-                return null;
+                throw new Exception("Vehicle not found with id {$this->id}");
             }
 
-            // Dynamically assign extras
-            $fields = [
-                'make',
-                'model',
-                'number_plate',
-                'seats',
-                'fuel',
-                'transmission',
-                'category_id',
-                'colour',
-                'drive_train',
-                'capacity',
-                'cylinders',
-                'economy_city',
-                'economy_highway',
-                'acceleration',
-                'aspiration',
-            ];
-
-            foreach ($fields as $field) {
-                $this->$field = $row[$field];
+            // Assign fields dynamically
+            foreach ($row as $field => $value) {
+                $this->$field = $value;
             }
 
             return $row;
         } catch (PDOException $e) {
-            // Bubble up SQL error so the endpoint can handle it
-            throw new Exception("SQL Error in get_vehicle_extras: " . $e->getMessage());
+            error_log("SQL Error in get_vehicle_base: " . $e->getMessage());
+            return null;
+        } catch (Exception $e) {
+            error_log("Error in get_vehicle_base: " . $e->getMessage());
+            return null;
         }
-
     }
 
     // function to get pricing details of a vehicle

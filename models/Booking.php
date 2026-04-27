@@ -24,6 +24,7 @@ class Booking
     public $ct_status; // contract signature status
     public $daily_rate;
     public $custom_rate;
+    public $mileage; // mileage value either from booking table or from form in complete booking process
     public $total;
     public $subtotal;
     public $cdw_total;
@@ -418,8 +419,9 @@ class Booking
     public function cancel_booking()
     {
         $status = "cancelled";
-        $sql    = "UPDATE bookings SET status = ? WHERE id = ?";
-        $stmt   = $this->con->prepare($sql);
+        aaa;
+        $sql  = "UPDATE bookings SET status = ? WHERE id = ?";
+        $stmt = $this->con->prepare($sql);
 
         if ($stmt->execute([$status, $this->id])) {
             // $this->id = $this->con->lastInsertId();
@@ -431,18 +433,48 @@ class Booking
         }
     }
     // complete a booking
-    public function complete_booking()
+    public function complete_booking_with_mileage()
     {
-        $status = "complete";
-        $sql    = "UPDATE bookings SET status = ? WHERE id = ?";
-        $stmt   = $this->con->prepare($sql);
+        try {
+            $this->con->beginTransaction();
 
-        if ($stmt->execute([$status, $this->id])) {
-            // $this->id = $this->con->lastInsertId();
+            // 1. Fetch vehicle basics (including current mileage)
+            $fleet     = new Fleet($this->con);
+            $fleet->id = $this->vehicle_id;
+            $vehicle   = $fleet->get_vehicle_base();
+
+            if (! $vehicle) {
+                throw new Exception("Vehicle not found for booking {$this->id}");
+            }
+
+            $vehicleMileage = intval($vehicle['mileage']);
+
+            // 2. Validation: new mileage must be >= current mileage
+            if ($this->mileage < $vehicleMileage) {
+                throw new Exception("Mileage entered ({$this->mileage}) is less than current vehicle mileage ({$vehicleMileage})");
+            }
+
+            // 3. Calculate booking mileage (distance driven)
+            $bookingMileage = 0;
+            if ($vehicleMileage > 0) {
+                $bookingMileage = $this->mileage - $vehicleMileage;
+            }
+
+            // 4. Update booking status + mileage
+            $sqlBooking  = "UPDATE bookings SET status = ?, mileage = ? WHERE id = ?";
+            $stmtBooking = $this->con->prepare($sqlBooking);
+            $stmtBooking->execute(["complete", $bookingMileage, $this->id]);
+
+            // 5. Update vehicle mileage
+            $sqlVehicle  = "UPDATE vehicle_basics SET mileage = ? WHERE id = ?";
+            $stmtVehicle = $this->con->prepare($sqlVehicle);
+            $stmtVehicle->execute([$this->mileage, $this->vehicle_id]);
+
+            $this->con->commit();
             return true;
-        } else {
-            // print error if something goes wrong
-            printf("Error :  % s . \n ", $stmt->error);
+        } catch (Exception $e) {
+            $this->con->rollBack();
+            error_log("Error completing booking with mileage: " . $e->getMessage());
             return false;
         }
     }
