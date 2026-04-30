@@ -6,16 +6,16 @@ include_once '../../models/Home.php';
 $db = (new Database())->connect();
 
 // For web, you may not need agent_id — instead, use account_id or global stats
-$data       = json_decode(file_get_contents("php://input"));
-$account_id = $data->account_id ?? null;
+$data     = json_decode(file_get_contents("php://input"));
+$agent_id = $data->account_id ?? null;
 
-if (! $account_id) {
+if (! $agent_id) {
     echo json_encode(["status" => "Error", "message" => "Missing account_id"]);
     exit;
 }
 
-$home             = new Home($db);
-$home->account_id = $account_id;
+$home           = new Home($db);
+$home->agent_id = $agent_id;
 
 $stats = $home->get_web_stats();
 

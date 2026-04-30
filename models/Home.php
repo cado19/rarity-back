@@ -2,6 +2,7 @@
 class Home
 {
     private $con;
+    public $agent_id;
 
     public function __construct($db)
     {
@@ -136,18 +137,18 @@ class Home
     public function get_web_stats()
     {
         // Active bookings
-        $activeStmt = $this->con->prepare("SELECT COUNT(*) as cnt FROM bookings WHERE status = 'active'");
-        $activeStmt->execute();
+        $activeStmt = $this->con->prepare("SELECT COUNT(*) as cnt FROM bookings WHERE status = 'active' AND account_id = ?");
+        $activeStmt->execute([$this->agent_id]);
         $active_bookings = $activeStmt->fetch(PDO::FETCH_ASSOC)['cnt'] ?? 0;
 
         // Upcoming bookings
-        $upcomingStmt = $this->con->prepare("SELECT COUNT(*) as cnt FROM bookings WHERE start_date > CURDATE()");
-        $upcomingStmt->execute();
+        $upcomingStmt = $this->con->prepare("SELECT COUNT(*) as cnt FROM bookings WHERE start_date > CURDATE() AND account_id = ?");
+        $upcomingStmt->execute([$this->agent_id]);
         $upcoming_bookings = $upcomingStmt->fetch(PDO::FETCH_ASSOC)['cnt'] ?? 0;
 
         // Revenue total
-        $revenueStmt = $this->con->prepare("SELECT SUM(CAST(total AS DECIMAL(10,2))) as revenue FROM bookings WHERE deleted = 'false'");
-        $revenueStmt->execute();
+        $revenueStmt = $this->con->prepare("SELECT SUM(CAST(total AS DECIMAL(10,2))) as revenue FROM bookings WHERE deleted = 'false' AND account_id = ?");
+        $revenueStmt->execute([$this->agent_id]);
         $revenue_total = $revenueStmt->fetch(PDO::FETCH_ASSOC)['revenue'] ?? 0;
 
         // Recent bookings
@@ -155,11 +156,11 @@ class Home
         SELECT b.id, b.booking_no, cd.first_name, cd.last_name, b.start_date
         FROM bookings b
         JOIN customer_details cd ON cd.id = b.customer_id
-        WHERE b.deleted = 'false'
+        WHERE b.deleted = 'false' AND b.account_id = ?
         ORDER BY b.created_at DESC
         LIMIT 3
     ");
-        $recentStmt->execute();
+        $recentStmt->execute([$this->agent_id]);
         $recent_bookings = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
 
         // Available vehicles
@@ -177,12 +178,12 @@ class Home
         SELECT cd.id, cd.first_name, cd.last_name, COUNT(b.id) AS booking_count
         FROM bookings b
         JOIN customer_details cd ON cd.id = b.customer_id
-        WHERE b.deleted = 'false'
+        WHERE b.deleted = 'false' AND b.account_id = ?
         GROUP BY cd.id, cd.first_name, cd.last_name
         ORDER BY booking_count DESC
         LIMIT 5
     ");
-        $topCustomersStmt->execute();
+        $topCustomersStmt->execute([$this->agent_id]);
         $top_customers = $topCustomersStmt->fetchAll(PDO::FETCH_ASSOC);
 
         // Top vehicles (most bookings)
@@ -190,12 +191,12 @@ class Home
         SELECT v.id, v.make, v.model, v.number_plate, COUNT(b.id) AS booking_count
         FROM bookings b
         JOIN vehicle_basics v ON v.id = b.vehicle_id
-        WHERE b.deleted = 'false'
+        WHERE b.deleted = 'false' AND b.account_id = ?
         GROUP BY v.id, v.make, v.model, v.number_plate
         ORDER BY booking_count DESC
         LIMIT 5
     ");
-        $topVehiclesStmt->execute();
+        $topVehiclesStmt->execute([$this->agent_id]);
         $top_vehicles = $topVehiclesStmt->fetchAll(PDO::FETCH_ASSOC);
 
         // Revenue by customer
@@ -203,12 +204,12 @@ class Home
         SELECT cd.id, cd.first_name, cd.last_name, SUM(CAST(b.total AS DECIMAL(10,2))) AS total_spent
         FROM bookings b
         JOIN customer_details cd ON cd.id = b.customer_id
-        WHERE b.deleted = 'false'
+        WHERE b.deleted = 'false' AND b.account_id = ?
         GROUP BY cd.id, cd.first_name, cd.last_name
         ORDER BY total_spent DESC
         LIMIT 5
     ");
-        $revenueByCustomerStmt->execute();
+        $revenueByCustomerStmt->execute([$this->agent_id]);
         $revenue_by_customer = $revenueByCustomerStmt->fetchAll(PDO::FETCH_ASSOC);
 
         // Revenue by vehicle
@@ -216,12 +217,12 @@ class Home
         SELECT v.id, v.make, v.model, SUM(CAST(b.total AS DECIMAL(10,2))) AS total_revenue
         FROM bookings b
         JOIN vehicle_basics v ON v.id = b.vehicle_id
-        WHERE b.deleted = 'false'
+        WHERE b.deleted = 'false' AND b.account_id = ?
         GROUP BY v.id, v.make, v.model
         ORDER BY total_revenue DESC
         LIMIT 5
     ");
-        $revenueByVehicleStmt->execute();
+        $revenueByVehicleStmt->execute([$this->agent_id]);
         $revenue_by_vehicle = $revenueByVehicleStmt->fetchAll(PDO::FETCH_ASSOC);
 
         return [
