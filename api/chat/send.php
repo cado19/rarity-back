@@ -13,6 +13,8 @@ $message->sender_role     = $data->sender_role; // "agent" or "customer"
 $message->sender_id       = $data->sender_id;
 $message->message         = $data->message;
 
+// echo json_encode($data->sender_role);
+
 $response = [];
 
 if ($message->send()) {
