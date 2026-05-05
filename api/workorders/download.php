@@ -1,5 +1,5 @@
 <?php
-require '../../vendor/autoload.php'; // make sure Dompdf is installed via Composer
+require '../../vendor/autoload.php'; // Dompdf via Composer
 include_once '../../config/cors.php';
 include_once '../../config/Database.php';
 include_once '../../models/Fleet.php';
@@ -10,9 +10,7 @@ use Dompdf\Options;
 $database = new Database();
 $db       = $database->connect();
 
-$fleet = new Fleet($db);
-
-// assign work order id
+$fleet                = new Fleet($db);
 $fleet->work_order_id = $_GET['id'] ?? null;
 
 $response = $fleet->read_work_order_with_items();
@@ -23,12 +21,15 @@ if ($response['status'] !== 'Success') {
     exit;
 }
 
-// Prepare HTML for PDF
 $workOrder = $response['work_order'];
 $items     = $response['items'];
 
+// Build HTML with logo
 $html = "
-    <h1>Work Order {$workOrder['work_order_number']}</h1>
+    <div style='text-align:center; margin-bottom:20px;'>
+        <img src='../../files/rarity_contract_top.png' alt='Company Logo' style='height:80px;' />
+        <h2 style='margin:0;'>Work Order {$workOrder['work_order_number']}</h2>
+    </div>
     <p><strong>Vehicle:</strong> {$workOrder['make']} {$workOrder['model']} ({$workOrder['number_plate']})</p>
     <p><strong>Title:</strong> {$workOrder['title']}</p>
     <p><strong>Description:</strong> {$workOrder['description']}</p>
