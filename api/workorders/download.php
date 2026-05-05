@@ -1,61 +1,76 @@
 <?php
-require '../../vendor/autoload.php'; // Composer autoload
+require '../../vendor/autoload.php'; // make sure Dompdf is installed via Composer
+include_once '../../config/cors.php';
+include_once '../../config/Database.php';
+include_once '../../models/Fleet.php';
 
 use Dompdf\Dompdf;
+use Dompdf\Options;
 
-include_once '../../config/Database.php';
+$database = new Database();
+$db       = $database->connect();
 
-$db = (new Database())->connect();
+$fleet = new Fleet($db);
 
-$id = $_GET['id'] ?? null;
-if (! $id) {
-    die("Missing work order ID");
+// assign work order id
+$fleet->work_order_id = $_GET['id'] ?? null;
+
+$response = $fleet->read_work_order_with_items();
+
+if ($response['status'] !== 'Success') {
+    header('Content-Type: application/json');
+    echo json_encode($response);
+    exit;
 }
 
-// Fetch work order
-$stmt = $db->prepare("SELECT * FROM work_orders WHERE id = ?");
-$stmt->execute([$id]);
-$order = $stmt->fetch(PDO::FETCH_ASSOC);
+// Prepare HTML for PDF
+$workOrder = $response['work_order'];
+$items     = $response['items'];
 
-$stmtItems = $db->prepare("SELECT * FROM work_order_items WHERE work_order_id = ?");
-$stmtItems->execute([$id]);
-$items = $stmtItems->fetchAll(PDO::FETCH_ASSOC);
-
-// Build HTML with logo
 $html = "
-<div style='text-align:center;'>
-  <img src='../../files/rarity_contract_top.png' alt='Company Logo' style='height:80px; margin-bottom:20px;' />
-</div>
-
-<h1 style='text-align:center;'>Work Order {$order['work_order_number']}</h1>
-<p><strong>Vehicle:</strong> {$order['make']} {$order['model']} ({$order['number_plate']})</p>
-<p><strong>Title:</strong> {$order['title']}</p>
-<p><strong>Description:</strong> {$order['description']}</p>
-<p><strong>Status:</strong> {$order['status']}</p>
-<p><strong>Scheduled Date:</strong> {$order['scheduled_date']}</p>
-<p><strong>Completed:</strong> {$order['completion_date']}</p>
-<p><strong>Total Cost:</strong> {$order['total_cost']}</p>
-
-<h3>Items</h3>
-<table border='1' cellspacing='0' cellpadding='5' width='100%'>
-<tr><th>Item</th><th>Cost</th><th>Quantity</th></tr>";
+    <h1>Work Order {$workOrder['work_order_number']}</h1>
+    <p><strong>Vehicle:</strong> {$workOrder['make']} {$workOrder['model']} ({$workOrder['number_plate']})</p>
+    <p><strong>Title:</strong> {$workOrder['title']}</p>
+    <p><strong>Description:</strong> {$workOrder['description']}</p>
+    <p><strong>Status:</strong> {$workOrder['status']}</p>
+    <p><strong>Scheduled Date:</strong> {$workOrder['scheduled_date']}</p>
+    <p><strong>Completion Date:</strong> {$workOrder['completion_date']}</p>
+    <p><strong>Labor Cost:</strong> {$workOrder['labor_cost']}</p>
+    <p><strong>Parts Cost:</strong> {$workOrder['parts_cost']}</p>
+    <p><strong>Total Cost:</strong> {$workOrder['total_cost']}</p>
+    <h3>Items</h3>
+    <table border='1' cellpadding='5' cellspacing='0' width='100%'>
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Cost</th>
+                <th>Quantity</th>
+            </tr>
+        </thead>
+        <tbody>";
 
 foreach ($items as $item) {
-    $html .= "<tr>
-        <td>{$item['item']}</td>
-        <td>{$item['cost']}</td>
-        <td>{$item['quantity']}</td>
-    </tr>";
+    $html .= "
+        <tr>
+            <td>{$item['item']}</td>
+            <td>{$item['cost']}</td>
+            <td>{$item['quantity']}</td>
+        </tr>";
 }
 
-$html .= "</table>";
+$html .= "
+        </tbody>
+    </table>
+";
 
-// Generate PDF
-$dompdf = new Dompdf();
-$dompdf->set_option('isRemoteEnabled', true); // allow images
+// Configure Dompdf
+$options = new Options();
+$options->set('isRemoteEnabled', true);
+$dompdf = new Dompdf($options);
+
 $dompdf->loadHtml($html);
 $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
 
-// Stream PDF
-$dompdf->stream("workorder-{$order['work_order_number']}.pdf", ["Attachment" => true]);
+// Stream PDF to browser
+$dompdf->stream("work_order_{$workOrder['work_order_number']}.pdf", ["Attachment" => true]);
