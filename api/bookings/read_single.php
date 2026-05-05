@@ -52,6 +52,7 @@ $booking_arr = [
     'cdw_total'    => $booking->cdw_total,
     'custom_rate'  => $booking->custom_rate,
     'total'        => $booking->total,
+    'mileage'      => $booking->mileage,
     'vehicle_id'   => $booking->vehicle_id,
     'make'         => $booking->make,
     'model'        => $booking->model,

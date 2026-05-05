@@ -545,28 +545,28 @@ class Booking
     }
 
     // get a voucher details
-    public function get_voucher_details()
+    public function voucher_details($id)
     {
-        $sql = "SELECT b.id, b.booking_no, b.custom_rate, b.total, b.start_date, b.start_time, b.end_date, b.end_time, b.created_at, vb.make, vb.model, vb.number_plate, vp.daily_rate, c.first_name, c.last_name FROM bookings b INNER JOIN vehicle_basics vb ON b.vehicle_id = vb.id INNER JOIN customer_details c ON b.customer_id = c.id INNER JOIN vehicle_pricing vp ON b.vehicle_id = vp.vehicle_id WHERE b.id = ?";
+        try {
+            $sql = "SELECT
+                        b.id, b.booking_no, b.custom_rate, b.driver_fee, b.fuel, b.vat, b.total,
+                        b.cdw_total, b.subtotal, b.start_date, b.start_time, b.end_date, b.end_time,
+                        b.created_at, vb.make, vb.model, vb.number_plate, vp.daily_rate,
+                        c.first_name AS customer_first_name, c.last_name AS customer_last_name,
+                        d.first_name AS driver_first_name, d.last_name AS driver_last_name
+                    FROM bookings b
+                    INNER JOIN vehicle_basics vb ON b.vehicle_id = vb.id
+                    INNER JOIN customer_details c ON b.customer_id = c.id
+                    INNER JOIN vehicle_pricing vp ON b.vehicle_id = vp.vehicle_id
+                    INNER JOIN drivers d ON b.driver_id = d.id
+                    WHERE b.id = ?";
 
-        $stmt = $this->con->prepare($sql);
-        $stmt->execute([$this->id]);
-        $row                = $stmt->fetch(PDO::FETCH_ASSOC);
-        $this->id           = $row['id'];
-        $this->booking_no   = $row['booking_no'];
-        $this->custom_rate  = $row['custom_rate'];
-        $this->total        = $row['total'];
-        $this->start_date   = $row['start_date'];
-        $this->start_time   = $row['start_time'];
-        $this->end_date     = $row['end_date'];
-        $this->end_time     = $row['end_time'];
-        $this->created_at   = $row['created_at'];
-        $this->make         = $row['make'];
-        $this->model        = $row['model'];
-        $this->number_plate = $row['number_plate'];
-        $this->daily_rate   = $row['daily_rate'];
-        $this->c_fname      = $row['first_name'];
-        $this->c_lname      = $row['last_name'];
+            $stmt = $this->con->prepare($sql);
+            $stmt->execute([$id]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (\Throwable $th) {
+            return null;
+        }
     }
 
     // get cdw calculation resources: vehicle_id, start_date, end_date
