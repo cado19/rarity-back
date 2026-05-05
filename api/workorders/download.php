@@ -27,7 +27,7 @@ $items     = $response['items'];
 // Build HTML with logo
 $html = "
     <div style='text-align:center; margin-bottom:20px;'>
-        <img src='https://backend.raritycars.com/files/rarity_contract_top.png' alt='Company Logo' style='height:80px;' />
+        <img src='https://backend.raritycars.com/files/rarity_contract_top.png' alt='Company Logo' />
         <h2 style='margin:0;'>Work Order {$workOrder['work_order_number']}</h2>
     </div>
     <p><strong>Vehicle:</strong> {$workOrder['make']} {$workOrder['model']} ({$workOrder['number_plate']})</p>
