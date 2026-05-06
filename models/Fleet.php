@@ -383,17 +383,22 @@ class Fleet
             // Default values
             $availability = 'unavailable';
             $maintenance  = 'no';
+            $notes        = '';
 
-            // Map status to availability/maintenance
+            // Map status to availability/maintenance + descriptive notes
             if ($status === 'available') {
                 $availability = 'available';
+                $notes        = "Vehicle marked available";
             } elseif ($status === 'maintenance') {
                 $maintenance = 'yes';
+                $notes       = "Vehicle put under maintenance";
             } elseif ($status === 'booked') {
                 $availability = 'unavailable';
+                $notes        = "Vehicle marked as booked";
             } elseif ($status === 'clear_maintenance') {
                 $availability = 'available';
                 $maintenance  = 'no';
+                $notes        = "Vehicle removed from maintenance";
             }
 
             $query = "UPDATE vehicle_basics
@@ -406,10 +411,10 @@ class Fleet
             $stmt->bindParam(':id', $this->id);
 
             if ($stmt->execute()) {
-                // Log the status change
-                $this->log_status_change($status, $user_id, "Status updated via API");
+                // Log the status change with descriptive notes
+                $this->log_status_change($status, $user_id, $notes);
 
-                return ["status" => "Success", "message" => "Vehicle status updated"];
+                return ["status" => "Success", "message" => $notes];
             } else {
                 return ["status" => "Error", "message" => "Failed to update vehicle status"];
             }
