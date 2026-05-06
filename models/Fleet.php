@@ -141,64 +141,72 @@ class Fleet
     // get single vehicle
     public function read_single()
     {
-        //create the query
-        $query = "SELECT
-          vb.make,
-          vb.model,
-          vb.number_plate,
-          cat.name AS category_name,
-          cat.id AS category_id,
-          vb.drive_train,
-          vb.seats,
-          vb.fuel,
-          vb.transmission,
-          vb.image,
-          vb.deleted,
-          vp.daily_rate,
-          vp.vehicle_excess,
-          vp.refundable_security_deposit,
-          vp.monthly_target,
-          vi.url AS earliest_image_url
+        try {
+            $query = "SELECT
+            vb.id,
+            vb.make,
+            vb.model,
+            vb.number_plate,
+            cat.name AS category_name,
+            cat.id AS category_id,
+            vb.drive_train,
+            vb.seats,
+            vb.fuel,
+            vb.transmission,
+            vb.image,
+            vb.maintenance,
+            vb.deleted,
+            vp.daily_rate,
+            vp.vehicle_excess,
+            vp.refundable_security_deposit,
+            vp.monthly_target,
+            vi.url AS earliest_image_url
         FROM vehicle_basics vb
         INNER JOIN vehicle_pricing vp ON vb.id = vp.vehicle_id
         INNER JOIN vehicle_categories cat ON vb.category_id = cat.id
         LEFT JOIN (
-          SELECT vehicle_id, url
-          FROM vehicle_images
-          WHERE (vehicle_id, created_at) IN (
-            SELECT vehicle_id, MIN(created_at)
+            SELECT vehicle_id, url
             FROM vehicle_images
-            GROUP BY vehicle_id
-          )
+            WHERE (vehicle_id, created_at) IN (
+                SELECT vehicle_id, MIN(created_at)
+                FROM vehicle_images
+                GROUP BY vehicle_id
+            )
         ) vi ON vb.id = vi.vehicle_id
         WHERE vb.id = ?
         LIMIT 1";
 
-        // prepare statement
-        $stmt = $this->con->prepare($query);
+            $stmt = $this->con->prepare($query);
+            $stmt->execute([$this->id]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
 
-        //execuute the query
-        $stmt->execute([$this->id]);
+        } catch (PDOException $e) {
+            return ["status" => "Error", "message" => $e->getMessage()];
+        }
+    }
 
-        //fetch the array
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    // models/Booking.php
 
-        //set the properties
-        $this->make           = $row['make'];
-        $this->model          = $row['model'];
-        $this->number_plate   = $row['number_plate'];
-        $this->category_id    = $row['category_id'];
-        $this->category_name  = $row['category_name'];
-        $this->transmission   = $row['transmission'];
-        $this->seats          = $row['seats'];
-        $this->drive_train    = $row['drive_train'];
-        $this->vehicle_excess = $row['vehicle_excess'];
-        $this->daily_rate     = $row['daily_rate'];
-        $this->fuel           = $row['fuel'];
-        $this->url            = $row['earliest_image_url'];
-        $this->deleted        = $row['deleted'];
+    public function get_vehicle_history()
+    {
+        try {
+            $sql = "SELECT vsh.id, vsh.vehicle_id, vsh.status, vsh.notes, vsh.changed_by, vsh.created_at,
+                       acc.name AS account_name
+                FROM vehicle_status_history vsh
+                LEFT JOIN accounts acc ON vsh.changed_by = acc.id
+                WHERE vsh.vehicle_id = :vehicle_id
+                ORDER BY vsh.created_at DESC";
 
-        // return $stmt;
+            $stmt = $this->con->prepare($sql);
+            $stmt->bindParam(':vehicle_id', $this->id, PDO::PARAM_INT);
+            $stmt->execute();
+
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        } catch (PDOException $e) {
+            error_log("Error fetching vehicle history: " . $e->getMessage());
+            return [];
+        }
     }
 
     // create vehicle
@@ -366,6 +374,87 @@ class Fleet
             return false;
         }
 
+    }
+
+    // update availability and maintenance status
+    public function update_status($status, $user_id)
+    {
+        try {
+            // Default values
+            $availability = 'unavailable';
+            $maintenance  = 'no';
+
+            // Map status to availability/maintenance
+            if ($status === 'available') {
+                $availability = 'available';
+            } elseif ($status === 'maintenance') {
+                $maintenance = 'yes';
+            } elseif ($status === 'booked') {
+                $availability = 'unavailable';
+            } elseif ($status === 'clear_maintenance') {
+                $availability = 'available';
+                $maintenance  = 'no';
+            }
+
+            $query = "UPDATE vehicle_basics
+                  SET availability = :availability, maintenance = :maintenance
+                  WHERE id = :id";
+
+            $stmt = $this->con->prepare($query);
+            $stmt->bindParam(':availability', $availability);
+            $stmt->bindParam(':maintenance', $maintenance);
+            $stmt->bindParam(':id', $this->id);
+
+            if ($stmt->execute()) {
+                // Log the status change
+                $this->log_status_change($status, $user_id, "Status updated via API");
+
+                return ["status" => "Success", "message" => "Vehicle status updated"];
+            } else {
+                return ["status" => "Error", "message" => "Failed to update vehicle status"];
+            }
+        } catch (PDOException $e) {
+            return ["status" => "Error", "message" => $e->getMessage()];
+        }
+    }
+
+    // clear maintenance
+    public function clear_maintenance($user_id)
+    {
+        try {
+            $sql = "UPDATE vehicle_basics
+                SET maintenance = 'no', availability = 'available'
+                WHERE id = :id";
+
+            $stmt = $this->con->prepare($sql);
+            $stmt->bindParam(':id', $this->id);
+
+            if ($stmt->execute()) {
+
+                return ["status" => "Success", "message" => "Vehicle maintenance cleared, now available"];
+            } else {
+                return ["status" => "Error", "message" => "Failed to clear maintenance"];
+            }
+        } catch (PDOException $e) {
+            return ["status" => "Error", "message" => $e->getMessage()];
+        }
+    }
+
+    // log anytime status of a vehicle changes
+    public function log_status_change($status, $changed_by = null, $notes = null)
+    {
+        try {
+            $sql = "INSERT INTO vehicle_status_history (vehicle_id, status, changed_by, notes)
+                VALUES (:vehicle_id, :status, :changed_by, :notes)";
+            $stmt = $this->con->prepare($sql);
+            $stmt->bindParam(':vehicle_id', $this->id);
+            $stmt->bindParam(':status', $status);
+            $stmt->bindParam(':changed_by', $changed_by);
+            $stmt->bindParam(':notes', $notes);
+            $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("Error logging status change: " . $e->getMessage());
+        }
     }
 
     // function to delete a vehicle

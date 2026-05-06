@@ -402,16 +402,42 @@ class Booking
     // activate a booking
     public function activate_booking()
     {
-        $status = "active";
-        $sql    = "UPDATE bookings SET status = ? WHERE id = ?";
-        $stmt   = $this->con->prepare($sql);
+        try {
+            $this->con->beginTransaction();
 
-        if ($stmt->execute([$status, $this->id])) {
-            // $this->id = $this->con->lastInsertId();
+            // 1. Update booking status
+            $status      = "active";
+            $sqlBooking  = "UPDATE bookings SET status = ? WHERE id = ?";
+            $stmtBooking = $this->con->prepare($sqlBooking);
+            $stmtBooking->execute([$status, $this->id]);
+
+            // 2. Get vehicle_id for this booking
+            $sqlVehicle  = "SELECT vehicle_id FROM bookings WHERE id = ?";
+            $stmtVehicle = $this->con->prepare($sqlVehicle);
+            $stmtVehicle->execute([$this->id]);
+            $vehicle_id = $stmtVehicle->fetchColumn();
+
+            if (! $vehicle_id) {
+                throw new Exception("Vehicle not found for booking {$this->id}");
+            }
+
+            // 3. Update vehicle availability
+            $sqlUpdateVehicle  = "UPDATE vehicle_basics SET availability = 'unavailable' WHERE id = ?";
+            $stmtUpdateVehicle = $this->con->prepare($sqlUpdateVehicle);
+            $stmtUpdateVehicle->execute([$vehicle_id]);
+
+            // 4. Log status change with user_id
+            $sqlLog = "INSERT INTO vehicle_status_history (vehicle_id, status, changed_by, notes)
+                   VALUES (?, ?, ?, ?)";
+            $stmtLog = $this->con->prepare($sqlLog);
+            $stmtLog->execute([$vehicle_id, "booked", $this->account_id, "Booking {$this->id} activated"]);
+
+            $this->con->commit();
             return true;
-        } else {
-            // print error if something goes wrong
-            printf("Error :  % s . \n ", $stmt->error);
+
+        } catch (Exception $e) {
+            $this->con->rollBack();
+            error_log("Activation error: " . $e->getMessage());
             return false;
         }
     }
@@ -433,13 +459,14 @@ class Booking
             return false;
         }
     }
+
     // complete a booking
     public function complete_booking_with_mileage()
     {
         try {
             $this->con->beginTransaction();
 
-            // 1. Fetch vehicle basics (including current mileage)
+            // 1. Fetch vehicle basics (including current mileage + maintenance flag)
             $fleet     = new Fleet($this->con);
             $fleet->id = $this->vehicle_id;
             $vehicle   = $fleet->get_vehicle_base();
@@ -449,6 +476,7 @@ class Booking
             }
 
             $vehicleMileage = intval($vehicle['mileage']);
+            $maintenance    = $vehicle['maintenance'] ?? 'no';
 
             // 2. Validation: new mileage must be >= current mileage
             if ($this->mileage < $vehicleMileage) {
@@ -466,13 +494,25 @@ class Booking
             $stmtBooking = $this->con->prepare($sqlBooking);
             $stmtBooking->execute(["complete", $bookingMileage, $this->id]);
 
-            // 5. Update vehicle mileage
-            $sqlVehicle  = "UPDATE vehicle_basics SET mileage = ? WHERE id = ?";
+            // 5. Update vehicle mileage + availability
+            $availability = ($maintenance === 'yes') ? 'unavailable' : 'available';
+
+            $sqlVehicle = "UPDATE vehicle_basics
+                        SET mileage = ?, availability = ?
+                        WHERE id = ?";
             $stmtVehicle = $this->con->prepare($sqlVehicle);
-            $stmtVehicle->execute([$this->mileage, $this->vehicle_id]);
+            $stmtVehicle->execute([$this->mileage, $availability, $this->vehicle_id]);
 
             $this->con->commit();
+
+            // 6. Log status change with user_id
+            $statusLabel = ($maintenance === 'yes') ? "maintenance" : "available";
+            $sqlLog      = "INSERT INTO vehicle_status_history (vehicle_id, status, changed_by, notes)
+           VALUES (?, ?, ?, ?)";
+            $stmtLog = $this->con->prepare($sqlLog);
+            $stmtLog->execute([$this->vehicle_id, $statusLabel, $this->account_id, "Booking {$this->id} completed"]);
             return true;
+
         } catch (Exception $e) {
             $this->con->rollBack();
             error_log("Error completing booking with mileage: " . $e->getMessage());
