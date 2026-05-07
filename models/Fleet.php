@@ -155,6 +155,7 @@ class Fleet
             vb.transmission,
             vb.image,
             vb.maintenance,
+            vb.mileage,
             vb.deleted,
             vp.daily_rate,
             vp.vehicle_excess,
