@@ -837,12 +837,15 @@ class Fleet
         try {
             $this->con->beginTransaction();
 
+            $partsCostInput = is_numeric($this->work_order_parts_cost) ? $this->work_order_parts_cost : 0;
+            $laborCostInput = is_numeric($this->work_order_labor_cost) ? $this->work_order_labor_cost : 0;
+
             // Insert base work order
             $sql = "INSERT INTO work_orders
             (vehicle_id, title, description, status, mileage, scheduled_date, labor_cost, parts_cost, total_cost)
             VALUES (?, ?, ?, 'open', ?, ?, ?, ?, 0)";
             $stmt = $this->con->prepare($sql);
-            $stmt->execute([$this->id, $this->work_order_title, $this->work_order_description, $this->work_order_mileage, $this->work_order_scheduled_date, $this->work_order_labor_cost, $this->work_order_parts_cost]);
+            $stmt->execute([$this->id, $this->work_order_title, $this->work_order_description, $this->work_order_mileage, $this->work_order_scheduled_date, $laborCostInput, $partsCostInput]);
 
             $workOrderId = $this->con->lastInsertId();
 
@@ -861,12 +864,16 @@ class Fleet
                 }
             }
 
-            // Grand total = subtotal + labor + parts
-            $grandTotal  = $subtotal + $this->work_order_labor_cost + $this->work_order_parts_cost;
+            // Decide parts_cost
+            // If items exist, use subtotal. Otherwise, use manual input.
+            $partsCost  = ! empty($items) ? $subtotal : $this->work_order_parts_cost;
+
+            // Grand total = labor + parts
+            $grandTotal = $this->work_order_labor_cost + $partsCost;
 
             // Update totals
-            $updateTotals = $this->con->prepare("UPDATE work_orders SET total_cost = ? WHERE id = ?");
-            $updateTotals->execute([$grandTotal, $workOrderId]);
+            $updateTotals = $this->con->prepare("UPDATE work_orders SET parts_cost = ?, total_cost = ? WHERE id = ?");
+            $updateTotals->execute([$partsCost, $grandTotal, $workOrderId]);
 
             $this->con->commit();
 
