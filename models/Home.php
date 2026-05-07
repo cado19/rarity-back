@@ -80,7 +80,7 @@ class Home
         $active_bookings = $activeStmt->fetch(PDO::FETCH_ASSOC)['cnt'] ?? 0;
 
         // Upcoming bookings
-        $upcomingStmt = $this->con->prepare("SELECT COUNT(*) as cnt FROM bookings WHERE account_id = ? AND start_date > CURDATE()");
+        $upcomingStmt = $this->con->prepare("SELECT COUNT(*) as cnt FROM bookings WHERE account_id = ? AND status = 'upcoming'");
         $upcomingStmt->execute([$this->agent_id]);
         $upcoming_bookings = $upcomingStmt->fetch(PDO::FETCH_ASSOC)['cnt'] ?? 0;
 
@@ -106,7 +106,7 @@ class Home
             SELECT v.id, v.make, v.model, v.transmission, v.fuel
             FROM vehicle_basics v
             WHERE v.id NOT IN (SELECT vehicle_id FROM bookings WHERE status = 'active')
-            LIMIT 3
+            LIMIT 10
         ");
         $vehicleStmt->execute();
         $available_vehicles = $vehicleStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -142,7 +142,7 @@ class Home
         $active_bookings = $activeStmt->fetch(PDO::FETCH_ASSOC)['cnt'] ?? 0;
 
         // Upcoming bookings
-        $upcomingStmt = $this->con->prepare("SELECT COUNT(*) as cnt FROM bookings WHERE start_date > CURDATE() AND account_id = ?");
+        $upcomingStmt = $this->con->prepare("SELECT COUNT(*) as cnt FROM bookings WHERE status = 'upcoming' AND account_id = ?");
         $upcomingStmt->execute([$this->agent_id]);
         $upcoming_bookings = $upcomingStmt->fetch(PDO::FETCH_ASSOC)['cnt'] ?? 0;
 
@@ -158,7 +158,7 @@ class Home
         JOIN customer_details cd ON cd.id = b.customer_id
         WHERE b.deleted = 'false' AND b.account_id = ?
         ORDER BY b.created_at DESC
-        LIMIT 3
+        LIMIT 5
     ");
         $recentStmt->execute([$this->agent_id]);
         $recent_bookings = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
