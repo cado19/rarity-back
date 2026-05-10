@@ -1,11 +1,8 @@
 <?php
 // THIS FILE WILL DELIVER A SINGLE BOOKING TO EXTERNAL REQUESTS
 
-// Headers
-header('Access-Control-Allow-Origin: *');
-header('Content-Type: application/json');
-
 // include necessary files
+include_once '../../config/cors.php';
 include_once '../../config/Database.php';
 include_once '../../models/Booking.php';
 
@@ -25,48 +22,20 @@ if (isset($_GET['id'])) {
 }
 
 // get single fleet
-$booking->read_single();
+$bookingData = $booking->read_single();
 
-$response = [];
-
-$booking_arr = [
-    'booking_no'   => $booking->booking_no,
-    'customer_id'  => $booking->c_id,
-    'c_fname'      => $booking->c_fname,
-    'c_lname'      => $booking->c_lname,
-    'phone_no'     => $booking->phone_no,
-    'driver_id'    => $booking->d_id,
-    'd_fname'      => $booking->d_fname,
-    'd_lname'      => $booking->d_lname,
-    'start_date'   => $booking->start_date,
-    'end_date'     => $booking->end_date,
-    'start_time'   => $booking->start_time,
-    'end_time'     => $booking->end_time,
-    'status'       => $booking->status,
-    'in_capital'   => $booking->in_capital,
-    'out_capital'  => $booking->out_capital,
-    'driver_fee'   => $booking->driver_fee,
-    'fuel'         => $booking->fuel,
-    'ct_status'    => $booking->ct_status,
-    'daily_rate'   => $booking->daily_rate,
-    'cdw_total'    => $booking->cdw_total,
-    'custom_rate'  => $booking->custom_rate,
-    'total'        => $booking->total,
-    'mileage'      => $booking->mileage,
-    'vehicle_id'   => $booking->vehicle_id,
-    'make'         => $booking->make,
-    'model'        => $booking->model,
-    'number_plate' => $booking->number_plate,
-    'agent'        => $booking->agent,
-    'override'     => $booking->override,
-    'duration'     => $booking->duration,
-    'url'          => $booking->url,
-];
-$status  = "Success";
-$message = "Successfully retrieved booking";
-
-$response['status']  = $status;
-$response['message'] = $message;
-$response['booking'] = $booking_arr;
+if ($bookingData) {
+    $response = [
+        'status'  => 'Success',
+        'message' => 'Successfully retrieved booking',
+        'booking' => $bookingData,
+    ];
+} else {
+    $response = [
+        'status'  => 'Error',
+        'message' => 'Booking not found',
+        'booking' => null,
+    ];
+}
 
 echo json_encode($response);

@@ -57,16 +57,17 @@ class Driver
     // get booking drivers
     public function booking_drivers()
     {
-        $status = "false";
+        $sql = "SELECT a.id, a.name, a.email, a.phone_no, a.country
+            FROM accounts a
+            INNER JOIN account_roles ar ON a.id = ar.account_id
+            INNER JOIN roles r ON ar.role_id = r.id
+            WHERE r.name = 'driver'
+              AND a.deleted = 'false'
+            ORDER BY a.id DESC";
 
-        $sql = "SELECT id, first_name, last_name FROM drivers WHERE deleted =  ? ORDER BY id DESC";
-
-        // prepare the statement
         $stmt = $this->con->prepare($sql);
-
-        $stmt->execute([$status]);
-
-        return $stmt;
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function read_single()
@@ -128,12 +129,12 @@ class Driver
 
     }
 
-    public function update_password() {
-        $sql = "UPDATE drivers SET password = ? WHERE id = ?";
+    public function update_password()
+    {
+        $sql  = "UPDATE drivers SET password = ? WHERE id = ?";
         $stmt = $this->con->prepare($sql);
         return $stmt->execute([$this->hashed_password, $this->id]);
     }
-
 
     public function update_rate()
     {
@@ -151,7 +152,7 @@ class Driver
 
     public function get_rate()
     {
-        $sql  = "SELECT rate_in_capital, rate_out_capital FROM drivers WHERE id = ?";
+        $sql  = "SELECT rate_in_capital, rate_out_capital FROM accounts WHERE id = ?";
         $stmt = $this->con->prepare($sql);
         $stmt->execute([$this->id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);

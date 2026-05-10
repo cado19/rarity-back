@@ -42,6 +42,8 @@ $duration = Booking::calculateDuration(
     ! empty($data['override']) && $data['override'] === true
 );
 
+$booking->duration = $duration;
+
 // Handle custom rate vs daily rate
 if (! empty($data['custom_rate']) && $data['custom_rate'] > 0) {
     $fleet->id = $booking->vehicle_id;
@@ -79,7 +81,7 @@ if ($applyVAT) {
 }
 
 // Driver fee
-if ($booking->d_id == 8) {
+if ($booking->d_id == 25) {
     $booking->driver_fee = 0;
 } else {
     $driver->id = $booking->d_id;

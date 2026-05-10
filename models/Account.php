@@ -206,12 +206,16 @@ class Account
     }
 
     // this function fetches the account for login purposes. It ensures that the account exists with the given email
-    public function fetch_account()
+    public function fetch_account_with_roles()
     {
-        $sql  = "SELECT id, name, email, password, role_id FROM accounts WHERE email = ? LIMIT 0,1";
+        $sql = "SELECT a.id, a.name, a.email, a.password, r.id AS role_id, r.name AS role_name
+            FROM accounts a
+            LEFT JOIN account_roles ar ON a.id = ar.account_id
+            LEFT JOIN roles r ON ar.role_id = r.id
+            WHERE a.email = ?
+            LIMIT 0,1";
         $stmt = $this->con->prepare($sql);
         $stmt->execute([$this->email]);
-
         return $stmt;
     }
 

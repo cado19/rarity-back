@@ -57,7 +57,55 @@ class Booking
     public function read_single()
     {
         try {
-            $sql  = "SELECT a.name AS agent, c.id AS customer_id, c.first_name AS customer_first_name, c.last_name AS customer_last_name, c.phone_no AS phone_no, v.id AS vehicle_id, v.model, v.make, v.number_plate, v.drive_train, cat.name AS category, v.seats, vp.daily_rate, d.id AS d_id, d.first_name AS driver_first_name, d.last_name AS driver_last_name, b.start_date, b.end_date, b.start_time, b.end_time, b.total, b.vat, b.subtotal, b.cdw_total, b.driver_fee, b.in_capital, b.out_capital, b.status, b.fuel, b.booking_no, b.custom_rate, b.media_url, b.override, b.duration, b.mileage, ct.status AS signature_status FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN accounts a ON b.account_id = a.id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id INNER JOIN vehicle_pricing vp ON b.vehicle_id = vp.vehicle_id INNER JOIN contracts ct ON b.id = ct.booking_id INNER JOIN vehicle_categories cat ON v.category_id = cat.id INNER JOIN drivers d ON b.driver_id = d.id WHERE b.id = ?";
+            $sql = "
+                SELECT
+                    a.name AS agent,
+                    c.id AS customer_id,
+                    c.first_name AS customer_first_name,
+                    c.last_name AS customer_last_name,
+                    c.phone_no AS phone_no,
+                    v.id AS vehicle_id,
+                    v.model,
+                    v.make,
+                    v.number_plate,
+                    v.drive_train,
+                    cat.name AS category,
+                    v.seats,
+                    vp.daily_rate,
+                    COALESCE(ad.id, d.id) AS d_id,
+                    COALESCE(ad.name, CONCAT(d.first_name, ' ', d.last_name)) AS driver_name,
+                    b.start_date,
+                    b.end_date,
+                    b.start_time,
+                    b.end_time,
+                    b.total,
+                    b.vat,
+                    b.subtotal,
+                    b.cdw_total,
+                    b.driver_fee,
+                    b.in_capital,
+                    b.out_capital,
+                    b.status,
+                    b.fuel,
+                    b.booking_no,
+                    b.custom_rate,
+                    b.media_url,
+                    b.override,
+                    b.duration,
+                    b.mileage,
+                    ct.status AS signature_status
+                FROM bookings b
+                INNER JOIN customer_details c ON c.id = b.customer_id
+                INNER JOIN accounts a ON b.account_id = a.id
+                INNER JOIN vehicle_basics v ON b.vehicle_id = v.id
+                INNER JOIN vehicle_pricing vp ON b.vehicle_id = vp.vehicle_id
+                INNER JOIN contracts ct ON b.id = ct.booking_id
+                INNER JOIN vehicle_categories cat ON v.category_id = cat.id
+                LEFT JOIN drivers d ON b.driver_id = d.id
+                LEFT JOIN accounts ad ON b.account_driver_id = ad.id
+                WHERE b.id = ?
+                ";
+
             $stmt = $this->con->prepare($sql);
             $stmt->execute([$this->id]);
 
@@ -68,38 +116,11 @@ class Booking
                 // Booking not found
                 return null;
             }
+            foreach ($row as $key => $value) {
+                $this->{$key} = $value;
+            }
 
-            $this->booking_no   = $row['booking_no'];
-            $this->c_id         = $row['customer_id'];
-            $this->c_fname      = $row['customer_first_name'];
-            $this->c_lname      = $row['customer_last_name'];
-            $this->phone_no     = $row['phone_no'];
-            $this->d_id         = $row['d_id'];
-            $this->d_fname      = $row['driver_first_name'];
-            $this->d_lname      = $row['driver_last_name'];
-            $this->start_date   = $row['start_date'];
-            $this->end_date     = $row['end_date'];
-            $this->start_time   = $row['start_time'];
-            $this->end_time     = $row['end_time'];
-            $this->driver_fee   = $row['driver_fee'];
-            $this->in_capital   = $row['in_capital'];
-            $this->out_capital  = $row['out_capital'];
-            $this->status       = $row['status'];
-            $this->custom_rate  = $row['custom_rate'];
-            $this->daily_rate   = $row['daily_rate'];
-            $this->cdw_total    = $row['cdw_total'];
-            $this->fuel         = $row['fuel'];
-            $this->total        = $row['total'];
-            $this->mileage      = $row['mileage'];
-            $this->vehicle_id   = $row['vehicle_id'];
-            $this->make         = $row['make'];
-            $this->model        = $row['model'];
-            $this->number_plate = $row['number_plate'];
-            $this->ct_status    = $row['signature_status'];
-            $this->agent        = $row['agent'];
-            $this->duration     = $row['duration'];
-            $this->override     = $row['override'];
-            $this->url          = $row['media_url'];
+            return $row ?: null;
         } catch (PDOException $e) {
             // Bubble up SQL error so the endpoint can handle it
             throw new Exception("SQL Error in get_booking: " . $e->getMessage());
@@ -288,8 +309,9 @@ class Booking
     {
         $status = "upcoming";
         $sql    = "INSERT INTO bookings
-        (customer_id, vehicle_id, driver_id, start_date, end_date, start_time, end_time, custom_rate, total, account_id, status, in_capital, out_capital, driver_fee, vat, subtotal)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        (customer_id, vehicle_id, account_driver_id, start_date, end_date, start_time, end_time,
+         custom_rate, total, account_id, status, in_capital, out_capital, driver_fee, vat, subtotal, duration)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
         $stmt = $this->con->prepare($sql);
 
@@ -310,6 +332,7 @@ class Booking
             $this->driver_fee,
             $this->vat,
             $this->subtotal,
+            $this->duration, // <-- save duration here
         ])) {
             $this->id = $this->con->lastInsertId();
             return true;
@@ -647,7 +670,7 @@ class Booking
         $sql = "UPDATE bookings
             SET vehicle_id = ?,
                 customer_id = ?,
-                driver_id = ?,
+                account_driver_id = ?,
                 start_date = ?,
                 end_date = ?,
                 start_time = ?,
