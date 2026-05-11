@@ -19,15 +19,44 @@ $home->agent_id = $agent_id;
 
 $stats = $home->get_web_stats();
 
-echo json_encode([
-    "status"              => "Success",
-    "active_bookings"     => $stats["active_bookings"],
-    "upcoming_bookings"   => $stats["upcoming_bookings"],
-    "revenue_total"       => $stats["revenue_total"],
-    "recent_bookings"     => $stats["recent_bookings"],
-    "available_vehicles"  => $stats["available_vehicles"],
-    "top_customers"       => $stats["top_customers"],
-    "top_vehicles"        => $stats["top_vehicles"],
-    "revenue_by_customer" => $stats["revenue_by_customer"],
-    "revenue_by_vehicle"  => $stats["revenue_by_vehicle"],
-]);
+$response = [
+    "status"    => "Success",
+    "message"   => "Dashboard stats retrieved",
+    "dashboard" => [
+        "base" => [
+            "active_bookings"     => $stats["active_bookings"],
+            "upcoming_bookings"   => $stats["upcoming_bookings"],
+            "revenue_total"       => $stats["revenue_total"],
+            "recent_bookings"     => $stats["recent_bookings"],
+            "available_vehicles"  => $stats["available_vehicles"],
+            "top_customers"       => $stats["top_customers"],
+            "top_vehicles"        => $stats["top_vehicles"],
+            "revenue_by_customer" => $stats["revenue_by_customer"],
+            "revenue_by_vehicle"  => $stats["revenue_by_vehicle"],
+        ],
+    ],
+];
+
+// Add role-specific sections dynamically
+if (! empty($stats["deliveries"]) || ! empty($stats["chauffeur_bookings"])) {
+    $response["dashboard"]["driver"] = [
+        "deliveries"         => $stats["deliveries"],
+        "chauffeur_bookings" => $stats["chauffeur_bookings"],
+    ];
+}
+
+if (! empty($stats["sales_bookings"])) {
+    $response["dashboard"]["sales"] = [
+        "sales_bookings" => $stats["sales_bookings"],
+    ];
+}
+
+if (! empty($stats["work_orders"]) || ! empty($stats["maintenance_vehicles"]) || ! empty($stats["service_alerts"])) {
+    $response["dashboard"]["fleet_manager"] = [
+        "work_orders"          => $stats["work_orders"],
+        "maintenance_vehicles" => $stats["maintenance_vehicles"],
+        "service_alerts"       => $stats["service_alerts"],
+    ];
+}
+
+echo json_encode($response);
