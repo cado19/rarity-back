@@ -44,6 +44,8 @@ $fleet->economy_highway = $data->economy_highway;
 $fleet->acceleration    = $data->acceleration;
 $fleet->aspiration      = $data->aspiration;
 $fleet->horsepower      = $data->horsepower;
+$fleet->mileage         = $data->mileage;
+$fleet->service         = $data->service;
 
 $response = [];
 

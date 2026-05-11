@@ -26,6 +26,8 @@ class Fleet
     public $economy_highway;
     public $acceleration;
     public $aspiration;
+    public $mileage; // current vehicle mileage (reading on the odometer)
+    public $service; //next service mileage
 
     //pricing properties
     public $pricing_id;
@@ -156,6 +158,7 @@ class Fleet
             vb.image,
             vb.maintenance,
             vb.mileage,
+            vb.service,
             vb.deleted,
             vp.daily_rate,
             vp.vehicle_excess,
@@ -349,12 +352,12 @@ class Fleet
     // function to update the basic details of vehicle
     public function update_base()
     {
-        $query = "UPDATE vehicle_basics SET make = ?, model = ?, number_plate = ?, seats = ?, fuel = ?, transmission = ?, category_id = ?, colour = ?, drive_train = ?, capacity = ?, cylinders = ?, economy_city = ?, economy_highway = ?, acceleration = ?, aspiration = ?, horsepower = ? WHERE id = ?";
+        $query = "UPDATE vehicle_basics SET make = ?, model = ?, number_plate = ?, seats = ?, fuel = ?, transmission = ?, category_id = ?, colour = ?, drive_train = ?, capacity = ?, cylinders = ?, economy_city = ?, economy_highway = ?, acceleration = ?, aspiration = ?, horsepower = ?, mileage = ?, service = ? WHERE id = ?";
 
         // prepare the statement
         $stmt = $this->con->prepare($query);
 
-        if ($stmt->execute([$this->make, $this->model, $this->number_plate, $this->seats, $this->fuel, $this->transmission, $this->category_id, $this->colour, $this->drive_train, $this->capacity, $this->cylinders, $this->economy_city, $this->economy_highway, $this->acceleration, $this->aspiration, $this->horsepower, $this->id])) {
+        if ($stmt->execute([$this->make, $this->model, $this->number_plate, $this->seats, $this->fuel, $this->transmission, $this->category_id, $this->colour, $this->drive_train, $this->capacity, $this->cylinders, $this->economy_city, $this->economy_highway, $this->acceleration, $this->aspiration, $this->horsepower, $this->mileage, $this->service, $this->id])) {
             return true;
         } else {
             // print error if something goes wrong

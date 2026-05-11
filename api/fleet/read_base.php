@@ -33,31 +33,13 @@ try {
             "extras"  => [],
         ]);
         exit;
+    } else {
+        echo json_encode([
+            "status"  => "Success",
+            "message" => "Successfully retrieved base data",
+            "base"    => $result,
+        ]);
     }
-
-    $base_arr = [
-        'make'            => $fleet->make,
-        'model'           => $fleet->model,
-        'number_plate'    => $fleet->number_plate,
-        'seats'           => $fleet->seats,
-        'fuel'            => $fleet->fuel,
-        'transmission'    => $fleet->transmission,
-        'category_id'     => $fleet->category_id,
-        'colour'          => $fleet->colour,
-        'drive_train'     => $fleet->drive_train,
-        'capacity'        => $fleet->capacity,
-        'cylinders'       => $fleet->cylinders,
-        'economy_city'    => $fleet->economy_city,
-        'economy_highway' => $fleet->economy_highway,
-        'acceleration'    => $fleet->acceleration,
-        'aspiration'      => $fleet->aspiration,
-    ];
-
-    echo json_encode([
-        "status"  => "Success",
-        "message" => "Successfully retrieved base data",
-        "base"    => $base_arr,
-    ]);
 
 } catch (Exception $e) {
     echo json_encode([
