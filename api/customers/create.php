@@ -1,86 +1,46 @@
 <?php
-// THIS FILE WILL DELIVER ALL POSTS TO EXTERNAL REQUESTS
-
-// Headers
-header('Access-Control-Allow-Origin: *');
-header('Content-Type: application/json');
-//header mods for customer request
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Access-Control-Allow-Headers, Access-Control-Allow-Origin, Content-Type, Access-Control-Allow-Methods, Authorization, X-Requested-With');
-
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
-
-// include necessary files
+// FILE FOR CREATING A CUSTOMER
+include_once '../../config/cors.php';
 include_once '../../config/Database.php';
 include_once '../../models/Customer.php';
 
-// Instantiate The DB and connect to it
-$database = new Database();
-$db       = $database->connect();
-
-// print_r($db);
-
-// instantiate customer object
+$db       = (new Database())->connect();
 $customer = new Customer($db);
 
-$response = [];
+$data = json_decode(file_get_contents("php://input"), true);
 
-// Get the raw posted data
-$data = json_decode(file_get_contents("php://input"));
-
-// var_dump($data);
-
-// echo json_encode($data);
-
-// echo $data->f_name;
-
-$customer->first_name          = $data->f_name;
-$customer->last_name           = $data->l_name;
-$customer->email               = $data->email;
-$customer->id_type             = $data->id_type;
-$customer->id_no               = $data->id_number;
-$customer->phone_no            = $data->phone_number ?? null;
-$customer->dl_number           = $data->dl_number ?? null;
-$customer->dl_expiry           = $data->dl_expiry ?? null;
-$customer->residential_address = $data->residential_address ?? null;
-$customer->work_address        = $data->work_address ?? null;
-$customer->date_of_birth       = $data->date_of_birth ?? null;
-
-// echo json_encode($customer->last_name);
-
-//check if client exists in db with associated email
-$result = $customer->check_unique_email();
-
-if ($result->rowCount() > 0) {
-    $status              = "Error";
-    $message             = "An account exists with this email.";
-    $response['status']  = $status;
-    $response['message'] = $message;
-    echo json_encode($response);
-} else {
-    // code...
-    // if ($customer->create()) {
-    //     $status                  = "Success";
-    //     $message                 = "Customer Created";
-    //     $response['status']      = $status;
-    //     $response['message']     = $message;
-    //     $response['customer_id'] = $customer->id;
-
-    //     echo json_encode($response);
-
-    // } else {
-    //     $status              = "Error";
-    //     $message             = "Customer Not Created.";
-    //     $response['status']  = $status;
-    //     $response['message'] = $message;
-
-    //     echo json_encode($response);
-
-    // }
-    $response = $customer->create();
-    echo json_encode($response);
-
+if (! $data) {
+    echo json_encode([
+        "status"  => "Error",
+        "message" => "Invalid request payload",
+    ]);
+    exit;
 }
+
+// Map input to model
+$customer->first_name          = $data['f_name'] ?? null;
+$customer->last_name           = $data['l_name'] ?? null;
+$customer->email               = $data['email'] ?? null;
+$customer->id_type             = $data['id_type'] ?? null;
+$customer->id_no               = $data['id_number'] ?? null;
+$customer->phone_no            = $data['phone_number'] ?? null;
+$customer->dl_no               = $data['dl_number'] ?? null;
+$customer->dl_expiry           = $data['dl_expiry'] ?? null;
+$customer->residential_address = $data['residential_address'] ?? null;
+$customer->work_address        = $data['work_address'] ?? null;
+$customer->date_of_birth       = $data['date_of_birth'] ?? null;
+$customer->account_id          = $data['account_id'] ?? null; // salesperson ID
+
+// Check unique email
+$result = $customer->check_unique_email();
+if ($result->rowCount() > 0) {
+    echo json_encode([
+        "status"  => "Error",
+        "message" => "An account exists with this email.",
+    ]);
+    exit;
+}
+
+// Create customer
+$response = $customer->create();
+echo json_encode($response);

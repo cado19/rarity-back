@@ -149,55 +149,29 @@ class Customer
 
         return $stmt;
     }
-
     // create customer
     public function create()
     {
+        $sql = "INSERT INTO customer_details
+        (first_name, last_name, email, id_type, id_no, dl_no, dl_expiration, phone_no, residential_address, work_address, date_of_birth, account_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        // Create the query
-        $sql = "INSERT INTO customer_details (first_name, last_name, email, id_type, id_no, dl_no, dl_expiration, phone_no, residential_address, work_address, date_of_birth) VALUES ( ? ,  ? ,  ? ,  ? ,  ? ,  ? ,  ? ,  ? ,  ? ,  ? ,  ? )";
-
-        // prepare the statement
         $stmt = $this->con->prepare($sql);
 
-        //clean the data
-
-        $this->first_name          = htmlspecialchars(strip_tags($this->first_name));
-        $this->last_name           = htmlspecialchars(strip_tags($this->last_name));
-        $this->email               = htmlspecialchars(strip_tags($this->email));
-        $this->id_type             = htmlspecialchars(strip_tags($this->id_type));
-        $this->id_no               = htmlspecialchars(strip_tags($this->id_no));
-        $this->phone_no            = htmlspecialchars(strip_tags($this->phone_no));
-        $this->dl_no               = htmlspecialchars(strip_tags($this->dl_no));
-        $this->dl_expiry           = ! empty($this->dl_expiry) ? htmlspecialchars(strip_tags($this->dl_expiry)) : null;
-        $this->residential_address = htmlspecialchars(strip_tags($this->residential_address));
-        $this->work_address        = htmlspecialchars(strip_tags($this->work_address));
-        $this->date_of_birth       = ! empty($this->date_of_birth) ? htmlspecialchars(strip_tags($this->date_of_birth)) : null;
-
-// ------------------ The old way ------------------
-        // if ($stmt->execute([$this->first_name, $this->last_name, $this->email, $this->id_type, $this->id_no, $this->dl_no, $this->dl_expiry, $this->phone_no, $this->residential_address, $this->work_address, $this->date_of_birth])) {
-        //     $this->id = $this->con->lastInsertId();
-        //     return true;
-        // } else {
-        //     // print error if something goes wrong
-        //     printf("Error :  % s . \n ", $stmt->error);
-        //     return false;
-        // }
-
-        // ------------------ The new way ------------------
         try {
             $stmt->execute([
-                $this->first_name,
-                $this->last_name,
-                $this->email,
-                $this->id_type,
-                $this->id_no,
-                $this->dl_no,
-                $this->dl_expiry, // NULL if not provided
-                $this->phone_no,
-                $this->residential_address,
-                $this->work_address,
-                $this->date_of_birth, // NULL if not provided
+                htmlspecialchars(strip_tags($this->first_name)),
+                htmlspecialchars(strip_tags($this->last_name)),
+                htmlspecialchars(strip_tags($this->email)),
+                htmlspecialchars(strip_tags($this->id_type)),
+                htmlspecialchars(strip_tags($this->id_no)),
+                htmlspecialchars(strip_tags($this->dl_no)),
+                ! empty($this->dl_expiry) ? htmlspecialchars(strip_tags($this->dl_expiry)) : null,
+                htmlspecialchars(strip_tags($this->phone_no)),
+                htmlspecialchars(strip_tags($this->residential_address)),
+                htmlspecialchars(strip_tags($this->work_address)),
+                ! empty($this->date_of_birth) ? htmlspecialchars(strip_tags($this->date_of_birth)) : null,
+                $this->account_id, // salesperson ID
             ]);
 
             $this->id = $this->con->lastInsertId();
@@ -218,6 +192,7 @@ class Customer
                     "residential_address" => $this->residential_address,
                     "work_address"        => $this->work_address,
                     "date_of_birth"       => $this->date_of_birth,
+                    "account_id"          => $this->account_id,
                 ],
             ];
         } catch (PDOException $e) {
@@ -227,7 +202,6 @@ class Customer
                 "error"   => $e->getMessage(),
             ];
         }
-
     }
 
     public function update_customer()

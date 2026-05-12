@@ -950,6 +950,23 @@ class Fleet
         }
     }
 
+    // Get work orders of a certain vehicle
+    public function getByVehicle($limit = null)
+    {
+        $sql = "SELECT id, work_order_number, title, status, scheduled_date, completion_date, total_cost
+            FROM work_orders
+            WHERE vehicle_id = ? AND deleted = 'false'
+            ORDER BY created_at DESC
+        ";
+
+        if ($limit) {
+            $sql .= " LIMIT " . intval($limit);
+        }
+        $stmt = $this->con->prepare($sql);
+        $stmt->execute([$this->id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function read_work_order_with_items()
     {
         // Fetch the work order itself
