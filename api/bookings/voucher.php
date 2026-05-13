@@ -25,7 +25,7 @@ if (isset($_GET['id'])) {
 }
 
 // get single fleet
-$booking->get_voucher_details();
+$booking->voucher_details();
 
 $response = [];
 

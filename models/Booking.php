@@ -613,17 +613,19 @@ class Booking
     {
         try {
             $sql = "SELECT
-                        b.id, b.booking_no, b.custom_rate, b.driver_fee, b.fuel, b.vat, b.total,
-                        b.cdw_total, b.subtotal, b.start_date, b.start_time, b.end_date, b.end_time,
-                        b.created_at, vb.make, vb.model, vb.number_plate, vp.daily_rate,
-                        c.first_name AS customer_first_name, c.last_name AS customer_last_name,
-                        d.first_name AS driver_first_name, d.last_name AS driver_last_name
-                    FROM bookings b
-                    INNER JOIN vehicle_basics vb ON b.vehicle_id = vb.id
-                    INNER JOIN customer_details c ON b.customer_id = c.id
-                    INNER JOIN vehicle_pricing vp ON b.vehicle_id = vp.vehicle_id
-                    INNER JOIN drivers d ON b.driver_id = d.id
-                    WHERE b.id = ?";
+                b.id, b.booking_no, b.custom_rate, b.driver_fee, b.fuel, b.vat, b.total,
+                b.cdw_total, b.subtotal, b.start_date, b.start_time, b.end_date, b.end_time,
+                b.created_at,
+                vb.make, vb.model, vb.number_plate, vp.daily_rate,
+                c.first_name AS customer_first_name, c.last_name AS customer_last_name,
+                COALESCE(a.name, CONCAT(d.first_name, ' ', d.last_name)) AS driver_name
+            FROM bookings b
+            INNER JOIN vehicle_basics vb ON b.vehicle_id = vb.id
+            INNER JOIN customer_details c ON b.customer_id = c.id
+            INNER JOIN vehicle_pricing vp ON b.vehicle_id = vp.vehicle_id
+            LEFT JOIN drivers d ON b.driver_id = d.id
+            LEFT JOIN accounts a ON b.account_driver_id = a.id
+            WHERE b.id = ?";
 
             $stmt = $this->con->prepare($sql);
             $stmt->execute([$id]);
