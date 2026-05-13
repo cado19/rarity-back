@@ -352,17 +352,65 @@ class Fleet
     // function to update the basic details of vehicle
     public function update_base()
     {
-        $query = "UPDATE vehicle_basics SET make = ?, model = ?, number_plate = ?, seats = ?, fuel = ?, transmission = ?, category_id = ?, colour = ?, drive_train = ?, capacity = ?, cylinders = ?, economy_city = ?, economy_highway = ?, acceleration = ?, aspiration = ?, horsepower = ?, mileage = ?, service = ? WHERE id = ?";
+        try {
+            // 1. Fetch current vehicle mileage + service
+            $stmtCurrent = $this->con->prepare("SELECT mileage, service FROM vehicle_basics WHERE id = ?");
+            $stmtCurrent->execute([$this->id]);
+            $row = $stmtCurrent->fetch(PDO::FETCH_ASSOC);
 
-        // prepare the statement
-        $stmt = $this->con->prepare($query);
+            if (! $row) {
+                throw new Exception("Vehicle not found with id {$this->id}");
+            }
 
-        if ($stmt->execute([$this->make, $this->model, $this->number_plate, $this->seats, $this->fuel, $this->transmission, $this->category_id, $this->colour, $this->drive_train, $this->capacity, $this->cylinders, $this->economy_city, $this->economy_highway, $this->acceleration, $this->aspiration, $this->horsepower, $this->mileage, $this->service, $this->id])) {
+            $currentMileage = intval($row['mileage']);
+            $currentService = intval($row['service']);
+
+            // 2. Validation: new mileage must be >= current mileage
+            if ($this->mileage < $currentMileage) {
+                throw new Exception("Mileage entered ({$this->mileage}) is less than current vehicle mileage ({$currentMileage})");
+            }
+
+            // 3. Validation: new service mileage must be >= current service mileage
+            if ($this->service < $currentService) {
+                throw new Exception("Service mileage entered ({$this->service}) is less than current service mileage ({$currentService})");
+            }
+
+            // 4. Proceed with update
+            $query = "UPDATE vehicle_basics
+                  SET make = ?, model = ?, number_plate = ?, seats = ?, fuel = ?, transmission = ?, category_id = ?, colour = ?, drive_train = ?, capacity = ?, cylinders = ?, economy_city = ?, economy_highway = ?, acceleration = ?, aspiration = ?, horsepower = ?, mileage = ?, service = ?
+                  WHERE id = ?";
+
+            $stmt = $this->con->prepare($query);
+
+            $stmt->execute([
+                $this->make,
+                $this->model,
+                $this->number_plate,
+                $this->seats,
+                $this->fuel,
+                $this->transmission,
+                $this->category_id,
+                $this->colour,
+                $this->drive_train,
+                $this->capacity,
+                $this->cylinders,
+                $this->economy_city,
+                $this->economy_highway,
+                $this->acceleration,
+                $this->aspiration,
+                $this->horsepower,
+                $this->mileage,
+                $this->service,
+                $this->id,
+            ]);
+
             return true;
-        } else {
-            // print error if something goes wrong
-            printf("Error: %s.\n", $stmt->error);
-            return false;
+        } catch (Exception $e) {
+            error_log("Error updating vehicle basics: " . $e->getMessage());
+            return [
+                "status"  => "Error",
+                "message" => $e->getMessage(),
+            ];
         }
     }
 

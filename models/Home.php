@@ -143,8 +143,15 @@ class Home
     {
         $account     = new Account($this->con);
         $account->id = $this->agent_id;
-        $account->fetch_role_ids();
-        $roles = $account->role_ids;
+
+        $roles = $account->fetch_role_names();
+
+        // normalize roles: lowercase + replace spaces with underscores
+        $roles = array_map(function ($r) {
+            return str_replace(' ', '_', strtolower($r));
+        }, $roles);
+
+        error_log("Roles for account {$this->agent_id}: " . json_encode($roles));
 
         // Active bookings
         $activeStmt = $this->con->prepare("SELECT COUNT(*) as cnt FROM bookings WHERE status = 'active' AND account_id = ?");
@@ -269,14 +276,14 @@ class Home
     private function get_driver_deliveries($driverId)
     {
         $stmt = $this->con->prepare("
-            SELECT d.id, b.booking_id, b.booking_no, b.start_date
+            SELECT d.id, b.id AS booking_id, b.booking_no, b.start_date
             FROM deliveries d JOIN bookings b ON d.booking_id = b.id
             WHERE (d.driver_id = ? OR d.account_driver_id = ?)
             AND d.delivered = 'false'
             ORDER BY b.start_date DESC
             LIMIT 5
         ");
-        $stmt->execute([$driverId]);
+        $stmt->execute([$driverId, $driverId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -290,7 +297,7 @@ class Home
             ORDER BY b.start_date DESC
             LIMIT 5
         ");
-        $stmt->execute([$driverId]);
+        $stmt->execute([$driverId, $driverId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -311,7 +318,7 @@ class Home
     private function get_work_orders()
     {
         $stmt = $this->con->prepare("
-            SELECT w.id, w.work_order_no, w.status, w.created_at, v.make, v.model, v.number_plate
+            SELECT w.id, w.work_order_number, w.status, w.created_at, v.make, v.model, v.number_plate
             FROM work_orders w
             JOIN vehicle_basics v ON v.id = w.vehicle_id
             WHERE w.status = 'open'
@@ -337,7 +344,7 @@ class Home
     private function get_service_alerts()
     {
         $stmt = $this->con->prepare("
-            SELECT v.id, v.make, v.model, v.number_plate, v.mileage, v.service_interval
+            SELECT v.id, v.make, v.model, v.number_plate, v.mileage, v.service
             FROM vehicle_basics v
             WHERE (v.service - v.mileage) <= 500
             ORDER BY v.mileage DESC

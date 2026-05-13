@@ -1,19 +1,8 @@
 <?php
-// THIS FILE WILL UPDATE EXTRAS OF A VEHICLE
-
-// Headers
-header('Access-Control-Allow-Origin: *');
-header('Content-Type: application/json');
-//header mods for customer request
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Access-Control-Allow-Headers, Access-Control-Allow-Origin, Content-Type, Access-Control-Allow-Methods, Authorization, X-Requested-With');
-
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
+// THIS FILE WILL UPDATE BASICS OF A VEHICLE
 
 // include necessary files
+include_once '../../config/cors.php';
 include_once '../../config/Database.php';
 include_once '../../models/Fleet.php';
 
@@ -49,18 +38,22 @@ $fleet->service         = $data->service;
 
 $response = [];
 
-if ($fleet->update_base()) {
-    $status  = "Success";
-    $message = "Successfully updated vehicle basics";
+$result = $fleet->update_base();
 
-    $response['status']  = $status;
-    $response['message'] = $message;
+if ($result === true) {
+    $response = [
+        "status"  => "Success",
+        "message" => "Successfully updated vehicle basics",
+    ];
+} elseif (is_array($result)) {
+    // Model returned structured error
+    $response = $result;
 } else {
-    $status  = "Error";
-    $message = "An error occured";
-
-    $response['status']  = $status;
-    $response['message'] = $message;
+    // Fallback error
+    $response = [
+        "status"  => "Error",
+        "message" => "An unknown error occurred while updating vehicle basics",
+    ];
 }
 
 echo json_encode($response);

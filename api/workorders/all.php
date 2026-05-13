@@ -1,4 +1,5 @@
 <?php
+// RETURNS ALL WORK ORDERS
 include_once '../../config/cors.php';
 include_once '../../config/Database.php';
 include_once '../../models/Fleet.php';

@@ -246,6 +246,19 @@ class Account
         $this->role_ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
 
+    // fetch multiple role names from account_roles
+    public function fetch_role_names()
+    {
+        $sql = "SELECT r.name
+            FROM account_roles ar
+            JOIN roles r ON ar.role_id = r.id
+            WHERE ar.account_id = ?";
+        $stmt = $this->con->prepare($sql);
+        $stmt->execute([$this->id]);
+        $this->roles = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        return $this->roles;
+    }
+
     // NEW: assign roles to account (replace existing)
     public function assign_roles($roleIds)
     {
