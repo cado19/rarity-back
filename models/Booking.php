@@ -469,9 +469,8 @@ class Booking
     public function cancel_booking()
     {
         $status = "cancelled";
-        aaa;
-        $sql  = "UPDATE bookings SET status = ? WHERE id = ?";
-        $stmt = $this->con->prepare($sql);
+        $sql    = "UPDATE bookings SET status = ? WHERE id = ?";
+        $stmt   = $this->con->prepare($sql);
 
         if ($stmt->execute([$status, $this->id])) {
             // $this->id = $this->con->lastInsertId();

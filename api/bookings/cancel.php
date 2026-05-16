@@ -1,14 +1,8 @@
 <?php
 // THIS FILE WILL DELIVER HANDLE BOOKING CANCELLATION
 
-// Headers
-header('Access-Control-Allow-Origin: *');
-header('Content-Type: application/json');
-//header mods for customer request
-header('Access-Control-Allow-Methods: POST');
-header('Access-Control-Allow-Headers: Access-Control-Allow-Headers, Access-Control-Allow-Origin, Content-Type, Access-Control-Allow-Methods, Authorization, X-Requested-With');
-
 // include necessary files
+include_once '../../config/cors.php';
 include_once '../../config/Database.php';
 include_once '../../models/Booking.php';
 
@@ -18,12 +12,18 @@ $db       = $database->connect();
 
 $booking = new Booking($db);
 
+// Expect JSON body
+$data = json_decode(file_get_contents("php://input"), true);
+
+// echo json_encode($data);
+
 // get id from url params
-if (isset($_GET['id'])) {
-    $booking->id = $_GET['id'];
-} else {
-    die();
+if (! isset($data['id'])) {
+    echo json_encode(["status" => "Error", "message" => "Missing parameters"]);
+    exit;
 }
+
+$booking->id = $data['id'];
 
 $response = [];
 
