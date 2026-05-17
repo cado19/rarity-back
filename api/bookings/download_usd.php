@@ -104,11 +104,11 @@ if ($voucher['vat'] > 0) {
 }
 
 $html .= '
-    <p><b>Subtotal:</b> \$" . number_format($ultimate_total_usd, 2) . "/-</p>
-    <p><b>Start Date:</b> {$voucher['start_date']}</p>
-    <p><b>End Date:</b> {$voucher['end_date']}</p>
-    <p><b>Start Time:</b> {$voucher['start_time']}</p>
-    <p><b>End Time:</b> {$voucher['end_time']}</p>
+    <p><b>Subtotal:</b> $' . number_format($ultimate_total_usd, 2) . '/-</p>
+    <p><b>Start Date:</b> ' . $voucher['start_date'] . '</p>
+    <p><b>End Date:</b> ' . $voucher['end_date'] . '</p>
+    <p><b>Start Time:</b> ' . $voucher['start_time'] . '</p>
+    <p><b>End Time:</b> ' . $voucher['end_time'] . '</p>
     <style>
       #payment-details {
         border: 3px solid #000;
@@ -154,6 +154,7 @@ $html .= '
         <p><b>ACCOUNT:</b> 40044610</p>
     </div>
 ';
+
 
 // Configure Dompdf
 $options = new Options();
