@@ -103,7 +103,7 @@ if ($voucher['vat'] > 0) {
               <p><b>VAT:</b> \${$vat_usd}/-</p>";
 }
 
-$html .= "
+$html .= '
     <p><b>Subtotal:</b> \$" . number_format($ultimate_total_usd, 2) . "/-</p>
     <p><b>Start Date:</b> {$voucher['start_date']}</p>
     <p><b>End Date:</b> {$voucher['end_date']}</p>
@@ -153,7 +153,7 @@ $html .= "
         <p><b>MPESA PAYBILL:</b> 400200</p>
         <p><b>ACCOUNT:</b> 40044610</p>
     </div>
-";
+';
 
 // Configure Dompdf
 $options = new Options();
