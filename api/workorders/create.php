@@ -15,6 +15,7 @@ $fleet->id                        = $data['vehicle_id'];
 $fleet->work_order_title          = $data['title'];
 $fleet->work_order_description    = $data['description'];
 $fleet->work_order_mileage        = $data['mileage'];
+$fleet->work_order_service        = $data['service'];
 $fleet->work_order_scheduled_date = $data['scheduled_date'];
 $fleet->work_order_labor_cost     = $data['labor_cost'];
 $fleet->work_order_parts_cost     = $data['parts_cost'];

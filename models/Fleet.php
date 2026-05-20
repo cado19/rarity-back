@@ -8,6 +8,9 @@ class Fleet
     private $pricing_table    = "vehicle_pricing";
     private $categories_table = "vehicle_categories";
 
+    // User properties
+    public $account_id;
+
     // Vehicle properties
     public $id;
     public $make;
@@ -49,7 +52,9 @@ class Fleet
     public $work_order_id;
     public $work_order_title;
     public $work_order_description;
+    public $work_order_status;
     public $work_order_mileage;
+    public $work_order_service;
     public $work_order_scheduled_date;
     public $work_order_labor_cost;
     public $work_order_parts_cost;
@@ -893,10 +898,10 @@ class Fleet
 
             // Insert base work order
             $sql = "INSERT INTO work_orders
-            (vehicle_id, title, description, status, mileage, scheduled_date, labor_cost, parts_cost, total_cost)
-            VALUES (?, ?, ?, 'open', ?, ?, ?, ?, 0)";
+            (vehicle_id, title, description, status, mileage, scheduled_date, labor_cost, parts_cost, total_cost, service)
+            VALUES (?, ?, ?, 'open', ?, ?, ?, ?, 0, ?)";
             $stmt = $this->con->prepare($sql);
-            $stmt->execute([$this->id, $this->work_order_title, $this->work_order_description, $this->work_order_mileage, $this->work_order_scheduled_date, $laborCostInput, $partsCostInput]);
+            $stmt->execute([$this->id, $this->work_order_title, $this->work_order_description, $this->work_order_mileage, $this->work_order_scheduled_date, $laborCostInput, $partsCostInput, $this->work_order_service]);
 
             $workOrderId = $this->con->lastInsertId();
 
@@ -925,6 +930,12 @@ class Fleet
             // Update totals
             $updateTotals = $this->con->prepare("UPDATE work_orders SET parts_cost = ?, total_cost = ? WHERE id = ?");
             $updateTotals->execute([$partsCost, $grandTotal, $workOrderId]);
+
+            // 🔧 Update vehicle_basics service mileage if provided
+            if (! empty($this->work_order_service)) {
+                $updateVehicleService = $this->con->prepare("UPDATE vehicle_basics SET service = ? WHERE id = ?");
+                $updateVehicleService->execute([$this->work_order_service, $this->id]);
+            }
 
             $this->con->commit();
 
@@ -963,7 +974,15 @@ class Fleet
                     wo.total_cost,
                     wo.assigned_to,
                     wo.approved_by,
-                    wo.created_at
+                    wo.created_at,
+                    wo.service AS work_order_service,
+                    vb.service AS vehicle_next_service,
+                    CASE
+                        WHEN wo.service IS NOT NULL
+                             AND wo.status IN ('completed','closed')
+                             AND vb.service = wo.service
+                        THEN 1 ELSE 0
+                    END AS service_updated
                 FROM work_orders wo
                 INNER JOIN vehicle_basics vb ON wo.vehicle_id = vb.id
                 WHERE wo.deleted = 'false'";
@@ -1071,6 +1090,26 @@ class Fleet
         try {
             $this->con->beginTransaction();
 
+            $serviceInput = is_numeric($this->work_order_service) ? $this->work_order_service : 0;
+
+            // Fetch current vehicle service mileage
+            $stmtCurrent = $this->con->prepare("SELECT service FROM vehicle_basics WHERE id = ?");
+            $stmtCurrent->execute([$this->id]);
+            $row = $stmtCurrent->fetch(PDO::FETCH_ASSOC);
+
+            if ($row) {
+                $currentServiceMileage = intval($row['service']);
+
+                // Validation: new service mileage must be >= current
+                if ($this->work_order_service !== null && $this->work_order_service !== '') {
+                    $newServiceMileage = intval($this->work_order_service);
+
+                    if ($newServiceMileage < $currentServiceMileage) {
+                        throw new Exception("Service mileage entered ({$newServiceMileage}) is less than current vehicle service mileage ({$currentServiceMileage})");
+                    }
+                }
+            }
+
             // Update base work order fields
             $sql = "UPDATE work_orders
                 SET title = ?,
@@ -1079,7 +1118,8 @@ class Fleet
                     scheduled_date = ?,
                     completion_date = ?,
                     labor_cost = ?,
-                    parts_cost = ?
+                    parts_cost = ?,
+                    service = ?
                 WHERE id = ?";
             $stmt = $this->con->prepare($sql);
             $stmt->execute([
@@ -1090,6 +1130,7 @@ class Fleet
                 $this->work_order_completion_date, // optional, can be null
                 $this->work_order_labor_cost,
                 $this->work_order_parts_cost,
+                $serviceInput,
                 $this->work_order_id,
             ]);
 
@@ -1108,20 +1149,32 @@ class Fleet
             }
 
             // Grand total = subtotal + labor + parts
-            $grandTotal  = $subtotal + $this->work_order_labor_cost + $this->work_order_parts_cost;
+            $grandTotal = $subtotal + $this->work_order_labor_cost + $this->work_order_parts_cost;
 
             // Update totals
             $updateTotals = $this->con->prepare("UPDATE work_orders SET total_cost = ? WHERE id = ?");
             $updateTotals->execute([$grandTotal, $this->work_order_id]);
 
+            // 🔧 Flag for service update
+            $serviceUpdated = false;
+
+            // If status is resolved/closed and service mileage is set, update vehicle_basics
+            if (in_array($this->work_order_status, ['resolved', 'closed']) && ! empty($this->work_order_service)) {
+                $updateVehicleService = $this->con->prepare("UPDATE vehicle_basics SET service = ? WHERE id = ?");
+                $updateVehicleService->execute([$this->work_order_service, $this->id]);
+                $serviceUpdated = true;
+            }
+
             $this->con->commit();
 
             return [
-                "status"        => "Success",
-                "message"       => "Work order updated successfully",
-                "work_order_id" => $this->work_order_id,
-                "subtotal"      => $subtotal,
-                "grand_total"   => $grandTotal,
+                "status"               => "Success",
+                "message"              => "Work order updated successfully",
+                "work_order_id"        => $this->work_order_id,
+                "subtotal"             => $subtotal,
+                "grand_total"          => $grandTotal,
+                "service_updated"      => $serviceUpdated,           // ✅ new flag
+                "next_service_mileage" => $this->work_order_service, // optional: echo back mileage
             ];
         } catch (Exception $e) {
             $this->con->rollBack();
