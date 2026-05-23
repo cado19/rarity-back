@@ -634,6 +634,23 @@ class Booking
         }
     }
 
+    // get a invoice details
+    public function invoice_details()
+    {
+        $query = "SELECT b.id, b.booking_no, b.start_date, b.end_date,
+                     b.duration AS duration_days,
+                     b.daily_rate, c.first_name AS customer_first_name,
+                     c.last_name AS customer_last_name, c.email AS customer_email,
+                     v.make, v.model, v.number_plate
+              FROM bookings b
+              JOIN customers c ON b.customer_id = c.id
+              JOIN vehicles v ON b.vehicle_id = v.id
+              WHERE b.id = ?";
+        $stmt = $this->con->prepare($query);
+        $stmt->execute([$this->id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
     // get cdw calculation resources: vehicle_id, start_date, end_date
     public function get_cdw_calc_resources()
     {
