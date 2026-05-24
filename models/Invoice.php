@@ -231,7 +231,7 @@ class Invoice
             $invoice['balance']    = ($invoice['duration_days'] * $invoice['daily_rate']) - $invoice['total_paid'];
 
             // full payment history
-            $pquery2 = "SELECT id, amount, payment_mode, payment_code, notes AS date
+            $pquery2 = "SELECT id, amount, payment_mode, payment_code, payment_time, notes
                     FROM invoice_payments
                     WHERE invoice_id = ?
                     ORDER BY payment_time ASC";

@@ -8,10 +8,9 @@ $database = new Database();
 $db       = $database->connect();
 
 $invoice = new Invoice($db);
-$data    = json_decode(file_get_contents("php://input"), true);
 
 // Set invoice id from request
-$invoice->id = $data['invoice_id'] ?? $data['id'];
+$invoice->id = $_GET['id'] ?? null;
 
 // Fetch invoice details
 $details = $invoice->invoice_details();

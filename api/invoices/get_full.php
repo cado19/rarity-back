@@ -17,13 +17,13 @@ $invoice->id = $data['invoice_id'] ?? $data['id'];
 $details = $invoice->invoice_details();
 
 // Fetch payment history
-$payments = $invoice->getPayments();
+// $payments = $invoice->getPayments();
 
 if ($details) {
     echo json_encode([
-        "status"   => "Success",
-        "invoice"  => $details,
-        "payments" => $payments,
+        "status"  => "Success",
+        "invoice" => $details,
+        // "payments" => $payments,
     ]);
 } else {
     echo json_encode([
