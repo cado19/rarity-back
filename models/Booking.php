@@ -29,6 +29,9 @@ class Booking
     public $subtotal;
     public $cdw_total;
     public $vat;
+    public $courtesy;             // courtesy car
+    public $claim_no;             // claim no
+    public $accident_vehicle_reg; // registration of the vehicle that got an accident for courtesy booking
     public $make;
     public $model;
     public $vehicle_id;
@@ -309,9 +312,10 @@ class Booking
     {
         $status = "upcoming";
         $sql    = "INSERT INTO bookings
-        (customer_id, vehicle_id, account_driver_id, start_date, end_date, start_time, end_time,
-         custom_rate, total, account_id, status, in_capital, out_capital, driver_fee, vat, subtotal, duration)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                    (customer_id, vehicle_id, account_driver_id, start_date, end_date, start_time, end_time,
+                     custom_rate, total, account_id, status, in_capital, out_capital, driver_fee, vat, subtotal, duration,
+                     courtesy, claim_no, accident_vehicle_reg)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
         $stmt = $this->con->prepare($sql);
 
@@ -332,7 +336,10 @@ class Booking
             $this->driver_fee,
             $this->vat,
             $this->subtotal,
-            $this->duration, // <-- save duration here
+            $this->duration,
+            $this->courtesy,
+            $this->claim_no,
+            $this->accident_vehicle_reg,
         ])) {
             $this->id = $this->con->lastInsertId();
             return true;

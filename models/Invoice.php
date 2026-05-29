@@ -283,13 +283,14 @@ class Invoice
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    // Record a payment
+// Record a payment
     public function addPayment()
     {
+        // Insert payment
         $stmt = $this->con->prepare("
-            INSERT INTO invoice_payments (invoice_id, amount, payment_mode, payment_code, notes)
-            VALUES (?, ?, ?, ?, ?)
-        ");
+        INSERT INTO invoice_payments (invoice_id, amount, payment_mode, payment_code, notes)
+        VALUES (?, ?, ?, ?, ?)
+    ");
         $stmt->execute([
             $this->id,
             $this->amount,
@@ -298,7 +299,30 @@ class Invoice
             $this->notes,
         ]);
 
-        return $this->invoice_details($this->id);
+        // Recalculate totals
+        $invoice = $this->invoice_details($this->id);
+
+        if ($invoice) {
+            if ($invoice['total_paid'] <= 0) {
+                // No payments → unpaid
+                $update = $this->con->prepare("UPDATE invoices SET status = 'unpaid' WHERE id = ?");
+                $update->execute([$this->id]);
+            } elseif ($invoice['balance'] <= 0) {
+                // Fully settled → paid
+                $update = $this->con->prepare("UPDATE invoices SET status = 'paid' WHERE id = ?");
+                $update->execute([$this->id]);
+                $invoice['balance'] = 0; // cap balance at 0
+            } else {
+                // Some payments but not fully settled → partially_paid
+                $update = $this->con->prepare("UPDATE invoices SET status = 'partially_paid' WHERE id = ?");
+                $update->execute([$this->id]);
+            }
+
+            // Refresh invoice details after status update
+            $invoice = $this->invoice_details($this->id);
+        }
+
+        return $invoice;
     }
 
     // Get payments on an invoice

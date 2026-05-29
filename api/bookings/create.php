@@ -23,16 +23,19 @@ $driver   = new Driver($db);
 $data = json_decode(file_get_contents('php://input'), true);
 
 // Assign booking properties
-$booking->c_id        = $data['customer_id'];
-$booking->vehicle_id  = $data['vehicle_id'];
-$booking->d_id        = $data['driver_id'];
-$booking->start_date  = $data['start_date'];
-$booking->end_date    = $data['oneday'] ? $data['start_date'] : $data['end_date'];
-$booking->start_time  = $data['start_time'];
-$booking->end_time    = $data['end_time'];
-$booking->account_id  = $data['account_id'];
-$booking->in_capital  = $data['in_capital'];
-$booking->out_capital = $data['out_capital'];
+$booking->c_id                 = $data['customer_id'];
+$booking->vehicle_id           = $data['vehicle_id'];
+$booking->d_id                 = $data['driver_id'];
+$booking->start_date           = $data['start_date'];
+$booking->end_date             = $data['oneday'] ? $data['start_date'] : $data['end_date'];
+$booking->start_time           = $data['start_time'];
+$booking->end_time             = $data['end_time'];
+$booking->account_id           = $data['account_id'];
+$booking->in_capital           = $data['in_capital'];
+$booking->out_capital          = $data['out_capital'];
+$booking->courtesy             = ! empty($data['courtesy']) ? 1 : 0;
+$booking->claim_no             = $data['claim_no'] ?? null;
+$booking->accident_vehicle_reg = $data['accident_vehicle_reg'] ?? null;
 
 $duration = Booking::calculateDuration(
     $booking->start_date,

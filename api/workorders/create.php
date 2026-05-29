@@ -14,6 +14,7 @@ $data  = json_decode(file_get_contents("php://input"), true);
 $fleet->id                        = $data['vehicle_id'];
 $fleet->work_order_title          = $data['title'];
 $fleet->work_order_description    = $data['description'];
+$fleet->work_order_status         = $data['status'];
 $fleet->work_order_mileage        = $data['mileage'];
 $fleet->work_order_service        = $data['service'];
 $fleet->work_order_scheduled_date = $data['scheduled_date'];
