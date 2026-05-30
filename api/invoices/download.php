@@ -4,6 +4,9 @@ include_once '../../config/cors.php';
 include_once '../../config/Database.php';
 include_once '../../models/Invoice.php';
 
+use Dompdf\Dompdf;
+use Dompdf\Options;
+
 $database = new Database();
 $db       = $database->connect();
 
@@ -17,6 +20,18 @@ $details = $invoice->invoice_details();
 
 // Fetch payment history
 $payments = $invoice->getPayments();
+
+// Base description
+$description = "{$details['duration_days']} days Car Rental Invoice from "
+. date("d/m/Y", strtotime($details['start_date']))
+. " to " . date("d/m/Y", strtotime($details['end_date']));
+
+// Courtesy booking extras
+if (! empty($details['claim_no']) && ! empty($details['accident_vehicle_reg'])) {
+    $description .= " for CLAIM NO: {$details['claim_no']} "
+        . "INSURED: {$details['customer_first_name']} {$details['customer_last_name']} – {$details['customer_email']} "
+        . "ACCIDENT TO {$details['accident_vehicle_reg']}";
+}
 
 $html = "  <style>
     body {
@@ -118,16 +133,16 @@ $html .= "<img src='https://backend.raritycars.com/files/rarity_contract_top.png
 
 $html .= '<div class="details">';
 
-$html .= "<p><b>Invoice No:</b> {$voucher['invoice_number']}</p>
+$html .= "<p><b>Invoice No:</b> {$details['invoice_number']}</p>
     <p><b>Status:</b> Paid</p>
-    <p><b>Billed To:</b> {$invoice['billed_to']}</p>
-    <p><b>Due Date:</b> {$invoice['due_date']}</p>
-    <p><b>Vehicle:</b> {$invoice['make']}{$invoice['model']}{$invoice['number_plate']}</p>
-    <p><b>Booking No:</b> {$invoice['booking_no']}</p>
+    <p><b>Billed To:</b> {$details['billed_to']}</p>
+    <p><b>Due Date:</b> {$details['due_date']}</p>
+    <p><b>Vehicle:</b> {$details['make']} {$details['model']} {$details['number_plate']}</p>
+    <p><b>Booking No:</b> {$details['booking_no']}</p>
   </div>";
 
 $html .= '<div class="subject">';
-$html .= "    Subject: {$invoice['subject']}
+$html .= "    Subject: {$details['subject']}
           </div>
           ";
 
@@ -135,7 +150,7 @@ $html .= "
       <table>
         <thead>
           <tr>
-            <th>Description</th>
+            <th>Item & Description</th>
             <th>Qty (Days)</th>
             <th>Rate</th>
             <th>Total</th>
@@ -143,10 +158,10 @@ $html .= "
         </thead>
         <tbody>
           <tr>
-            <td>{$invoice['make']}{$invoice['model']}{$invoice['number_plate']}  Hire</td>
-            <td>{$invoice['duration_days']}</td>
-            <td>{$invoice['daily_rate']}</td>
-            <td>{$invoice['balance']}</td>
+            <td>{$description}  Hire</td>
+            <td>{$details['duration_days']}</td>
+            <td>{$details['daily_rate']}</td>
+            <td>{$details['balance']}</td>
           </tr>
         </tbody>
       </table>
@@ -168,13 +183,13 @@ $html .= "<h3>PAYMENT DETAILS:</h3>
           </div>";
 
 // Configure Dompdf
-$options = new Options();
+$options  = new Options();
 $options->set('isRemoteEnabled', true);
-$dompdf = new Dompdf($options);
+$dompdf  = new Dompdf($options);
 
 $dompdf->loadHtml($html);
 $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
 
 // Stream PDF
-$dompdf->stream("Invoice_{$voucher['invoice_number']}.pdf", ["Attachment" => true]);
+$dompdf->stream("Invoice_{$details['invoice_number']}.pdf", ["Attachment" => true]);
