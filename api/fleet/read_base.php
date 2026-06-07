@@ -1,10 +1,8 @@
 <?php
 // THIS FILE WILL DELIVER MAKE, MODEL AND NUMBER PLATE TO EXTERNAL APIs BASED ON vehicle id
-// Headers
-header('Access-Control-Allow-Origin: *');
-header('Content-Type: application/json');
 
 // include necessary files
+include_once '../../config/cors.php';
 include_once '../../config/Database.php';
 include_once '../../models/Fleet.php';
 
@@ -30,7 +28,7 @@ try {
         echo json_encode([
             "status"  => "Error",
             "message" => "No base data found for this vehicle",
-            "extras"  => [],
+            "base"    => [],
         ]);
         exit;
     } else {

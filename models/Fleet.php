@@ -72,8 +72,22 @@ class Fleet
     public $apple_carplay;
     public $sunroof;
 
+    // requirements properties
+    public $req_id;
+    public $req_title;
+    public $req_description;
+    public $req_priority;
+    public $req_status;
+    public $req_category;
+    public $req_cost_estimate;
+    public $req_actual_cost;
+    public $req_due_date;
+    public $req_completed_at;
+    public $req_notes;
+
     public $title; // to be used in getting vehicle make, model, number plate for calendar
     public $url;   // for getting and saving an image url
+    public $agent_id;
     public $deleted;
     public $created_at;
 
@@ -334,6 +348,86 @@ class Fleet
             return false;
         }
 
+    }
+
+    // function to save requirements of a vehicle
+    public function save_requirements()
+    {
+        $sql  = "INSERT INTO vehicle_requirements (vehicle_id, title, description, priority, status, category, assigned_to, cost_estimate, actual_cost, due_date, completed_at, notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+        $stmt = $this->con->prepare($sql);
+
+        // Bind values, using null for optional fields if not set
+        $assigned_to   = isset($this->req_assigned_to) ? $this->req_assigned_to : null;
+        $cost_estimate = isset($this->req_cost_estimate) ? $this->req_cost_estimate : null;
+        $actual_cost   = isset($this->req_actual_cost) ? $this->req_actual_cost : null;
+        $due_date      = isset($this->req_due_date) ? $this->req_due_date : null;
+        $completed_at  = isset($this->req_completed_at) ? $this->req_completed_at : null;
+        $notes         = isset($this->req_notes) ? $this->req_notes : null;
+
+        if ($stmt->execute([
+            $this->id,
+            $this->req_title,
+            $this->req_description,
+            $this->req_priority,
+            $this->req_status,
+            $this->req_category,
+            $this->agent_id,
+            $this->req_cost_estimate,
+            $this->req_actual_cost,
+            $this->req_due_date,
+            $this->req_completed_at,
+            $this->req_notes,
+        ])) {
+            return ["status" => "Success", "message" => "Requirement saved"];
+        } else {
+            return ["status" => "Error", "message" => $stmt->errorInfo()];
+        }
+    }
+
+    // function to update requirement
+    public function update_requirement()
+    {
+        $sql = "UPDATE vehicle_requirements
+            SET title = ?,
+                description = ?,
+                priority = ?,
+                status = ?,
+                category = ?,
+                assigned_to = ?,
+                cost_estimate = ?,
+                actual_cost = ?,
+                due_date = ?,
+                completed_at = ?,
+                notes = ?
+            WHERE id = ?";
+
+        $stmt = $this->con->prepare($sql);
+
+        $assigned_to   = isset($this->req_assigned_to) ? $this->req_assigned_to : null;
+        $cost_estimate = isset($this->req_cost_estimate) ? $this->req_cost_estimate : null;
+        $actual_cost   = isset($this->req_actual_cost) ? $this->req_actual_cost : null;
+        $due_date      = isset($this->req_due_date) ? $this->req_due_date : null;
+        $completed_at  = isset($this->req_completed_at) ? $this->req_completed_at : null;
+        $notes         = isset($this->req_notes) ? $this->req_notes : null;
+
+        if ($stmt->execute([
+            $this->req_title,
+            $this->req_description,
+            $this->req_priority,
+            $this->req_status,
+            $this->req_category,
+            $assigned_to,
+            $cost_estimate,
+            $actual_cost,
+            $due_date,
+            $completed_at,
+            $notes,
+            $this->req_id,
+        ])) {
+            return ["status" => "success", "message" => "Requirement updated"];
+        } else {
+            return ["status" => "error", "message" => $stmt->errorInfo()];
+        }
     }
 
     // function to get save an image of a vehicle
@@ -683,6 +777,32 @@ class Fleet
 
         }
 
+    }
+
+    // Get the requirements of a certain vehicle
+    public function read_requirements()
+    {
+        try {
+            $sql  = "SELECT * FROM vehicle_requirements WHERE vehicle_id = ?";
+            $stmt = $this->con->prepare($sql);
+            $stmt->execute([$this->id]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return ["status" => "Error", "message" => $e->getMessage()];
+        }
+    }
+
+    // Get single requirement
+    public function read_requirement()
+    {
+        try {
+            $sql  = "SELECT * FROM vehicle_requirements WHERE id = ?";
+            $stmt = $this->con->prepare($sql);
+            $stmt->execute([$this->req_id]);
+            return $stmt->fetch();
+        } catch (Exception $e) {
+            return ["status" => "Error", "message" => $e->getMessage()];
+        }
     }
 
     // function to retrieve all categories for saving a vehicle
