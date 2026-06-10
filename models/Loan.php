@@ -1,6 +1,6 @@
 <?php
 
-class LoanRepayment
+class Loan
 {
     // DB Stuff
     private $con;
@@ -51,11 +51,19 @@ class LoanRepayment
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getLoanById($id)
+    public function getLoanById()
     {
         $query = "SELECT * FROM {$this->loans_table} WHERE id = ? AND deleted = 0";
         $stmt  = $this->con->prepare($query);
         $stmt->execute([$id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function getLoanByVehicleId()
+    {
+        $query = "SELECT * FROM vehicle_loans WHERE vehicle_id = ? AND deleted = 0 LIMIT 1";
+        $stmt  = $this->con->prepare($query);
+        $stmt->execute([$this->vehicle_id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
@@ -85,19 +93,30 @@ class LoanRepayment
         $query = "INSERT INTO {$this->loan_repayments_table}
                   (loan_id, amount, source, booking_id, paid_at)
                   VALUES (?, ?, ?, ?, ?)";
-        $stmt = $this->con->prepare($query);
+
+        // Ensure booking_id is NULL if not provided
+        $booking_id = ! empty($this->booking_id) ? $this->booking_id : null;
+        $stmt       = $this->con->prepare($query);
         return $stmt->execute([
             $this->loan_id, $this->amount, $this->source,
-            $this->booking_id, $this->paid_at,
+            $booking_id, $this->paid_at,
         ]);
     }
 
-    public function getRepaymentsByLoan($loan_id)
+    public function getRepaymentsByLoan()
     {
         $query = "SELECT * FROM {$this->loan_repayments_table} WHERE loan_id = ? AND deleted=0 ORDER BY paid_at ASC";
         $stmt  = $this->con->prepare($query);
-        $stmt->execute([$loan_id]);
+        $stmt->execute([$this->loan_id]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getRepaymentById()
+    {
+        $query = "SELECT * FROM {$this->repayments_table} WHERE id = ? AND deleted = 0 LIMIT 1";
+        $stmt  = $this->con->prepare($query);
+        $stmt->execute([$this->repayment_id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     public function updateRepayment($id)
