@@ -151,6 +151,36 @@ class Invoice
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // Get all partially paid invoices
+    public function getPartiallypaid()
+    {
+        $query = "
+            SELECT i.id AS invoice_id,
+                i.invoice_number,
+                i.status,
+                i.subject,
+                i.due_date,
+                i.terms,
+                i.billed_to,
+                i.created_at,
+                b.booking_no,
+                c.first_name AS customer_first_name,
+                c.last_name AS customer_last_name,
+                v.make,
+                v.model,
+                v.number_plate
+            FROM invoices i
+            JOIN bookings b ON i.booking_id = b.id
+            JOIN customer_details c ON b.customer_id = c.id
+            JOIN vehicle_basics v ON b.vehicle_id = v.id
+            WHERE i.status = 'partially_paid'
+            ORDER BY i.created_at DESC
+        ";
+        $stmt = $this->con->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
 // Get all cancelled invoices
     public function getCancelled()
     {

@@ -134,7 +134,7 @@ $html .= "<img src='https://backend.raritycars.com/files/rarity_contract_top.png
 $html .= '<div class="details">';
 
 $html .= "<p><b>Invoice No:</b> {$details['invoice_number']}</p>
-    <p><b>Status:</b> Paid</p>
+    <p><b>Status:</b> {$details['status']}</p>
     <p><b>Billed To:</b> {$details['billed_to']}</p>
     <p><b>Due Date:</b> {$details['due_date']}</p>
     <p><b>Vehicle:</b> {$details['make']} {$details['model']} {$details['number_plate']}</p>
