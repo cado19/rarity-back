@@ -1,23 +1,9 @@
 <?php
-// THIS FILE WILL DELIVER ALL POSTS TO EXTERNAL REQUESTS
-
-// Headers
-header('Access-Control-Allow-Origin: *');
-header('Content-Type: application/json');
-//header mods for customer request
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Access-Control-Allow-Headers, Access-Control-Allow-Origin, Content-Type, Access-Control-Allow-Methods, Authorization, X-Requested-With');
-
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
-
-// include necessary files
+// ADD A VEHICLE TO THE DATABASE
+include_once '../../config/cors.php';
 include_once '../../config/Database.php';
 include_once '../../models/Fleet.php';
 
-// Instantiate The DB and connect to it
 $database = new Database();
 $db       = $database->connect();
 
@@ -37,51 +23,55 @@ $fleet->seats          = $data->seats;
 $fleet->daily_rate     = $data->daily_rate;
 $fleet->vehicle_excess = $data->vehicle_excess;
 
+// add other pricing/extras fields as needed
+$fleet->refundable_security_deposit = $data->refundable_security_deposit ?? null;
+$fleet->cdw_rate                    = $data->cdw_rate ?? null;
+$fleet->monthly_target              = $data->monthly_target ?? null;
+// $fleet->comfort_features            = $data->comfort_features ?? null;
+// $fleet->safety_features             = $data->safety_features ?? null;
+
 $response = [];
 
-//check whether the number plate is unique
-$result = $fleet->check_unique_number_plate();
-
-if ($result->rowCount() > 0) {
-    $status              = "Error";
-    $message             = "A vehicle exists with this number plate.";
-    $response['status']  = $status;
-    $response['message'] = $message;
-    echo json_encode($response);
-} else {
-    if ($fleet->create()) {
-        // create the vehicle pricing
-        if ($fleet->create_pricing()) {
-            if ($fleet->create_extras()) {
-                // code...
-                $status                 = "Success";
-                $message                = "Vehicle Created";
-                $response['status']     = $status;
-                $response['message']    = $message;
-                $response['vehicle_id'] = $fleet->id;
-                echo json_encode($response);
-            } else {
-                $status              = "Error";
-                $message             = "An error occured saving vehicle extra (comfort) details.";
-                $response['status']  = $status;
-                $response['message'] = $message;
-                echo json_encode($response);
-            }
-
-        } else {
-            $status              = "Error";
-            $message             = "An error occured saving vehicle pricing details.";
-            $response['status']  = $status;
-            $response['message'] = $message;
-            echo json_encode($response);
-        }
-
-    } else {
-        $status              = "Error";
-        $message             = "An error occured saving vehicle details.";
-        $response['status']  = $status;
-        $response['message'] = $message;
-        echo json_encode($response);
+try {
+    // check uniqueness first
+    $result = $fleet->check_unique_number_plate();
+    if ($result->rowCount() > 0) {
+        echo json_encode([
+            "status"  => "Error",
+            "message" => "A vehicle exists with this number plate.",
+        ]);
+        exit();
     }
 
+    // begin transaction
+    $db->beginTransaction();
+
+    if (! $fleet->create()) {
+        throw new Exception("An error occurred saving vehicle details.");
+    }
+
+    if (! $fleet->create_pricing()) {
+        throw new Exception("An error occurred saving vehicle pricing details.");
+    }
+
+    // if (! $fleet->create_extras()) {
+    //     throw new Exception("An error occurred saving vehicle extra details.");
+    // }
+
+    // commit if all succeeded
+    $db->commit();
+
+    echo json_encode([
+        "status"     => "Success",
+        "message"    => "Vehicle Created",
+        "vehicle_id" => $fleet->id,
+    ]);
+
+} catch (Exception $e) {
+    // rollback if any step fails
+    $db->rollBack();
+    echo json_encode([
+        "status"  => "Error",
+        "message" => $e->getMessage(),
+    ]);
 }

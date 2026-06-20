@@ -318,7 +318,7 @@ class Fleet
     // function to get save the details of a vehicle
     public function create_extras()
     {
-        $sql = "INSERT INTO vehicle_pricing (vehicle_id) VALUES (?)";
+        $sql = "INSERT INTO vehicle_extras (vehicle_id) VALUES (?)";
 
         // prepare the statement
         $stmt = $this->con->prepare($sql);
