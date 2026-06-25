@@ -38,6 +38,7 @@ $duration = Booking::calculateDuration(
     ! empty($data->override) && $data->override === true
 );
 
+$booking->duration = $duration;
 // Rate calculation
 if (! empty($data->custom_rate) && $data->custom_rate > 0) {
     $fleet->id = $booking->vehicle_id;
