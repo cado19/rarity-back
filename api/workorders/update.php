@@ -21,6 +21,7 @@ $fleet->work_order_scheduled_date  = $data['scheduled_date'];
 $fleet->work_order_completion_date = $data['completion_date'] ?? null;
 $fleet->work_order_labor_cost      = $data['labor_cost'];
 $fleet->work_order_parts_cost      = $data['parts_cost'];
+$fleet->work_order_mpesa_code      = $data['mpesa_code'];
 
 // update the work order
 $response = $fleet->update_work_order($data['items'] ?? []);

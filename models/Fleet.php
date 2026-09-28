@@ -60,6 +60,7 @@ class Fleet
     public $work_order_parts_cost;
     public $work_order_total_cost;
     public $work_order_assigned_to;
+    public $work_order_mpesa_code;
 
     // extras properties
     public $extras_id;
@@ -1172,6 +1173,7 @@ class Fleet
                 wo.description,
                 wo.status,
                 wo.mileage,
+                wo.service,
                 wo.scheduled_date,
                 wo.completion_date,
                 wo.labor_cost,
@@ -1179,6 +1181,7 @@ class Fleet
                 wo.total_cost,
                 wo.assigned_to,
                 wo.approved_by,
+                wo.mpesa_code,
                 wo.created_at
             FROM work_orders wo
             INNER JOIN vehicle_basics vb ON wo.vehicle_id = vb.id
@@ -1243,7 +1246,8 @@ class Fleet
                     completion_date = ?,
                     labor_cost = ?,
                     parts_cost = ?,
-                    service = ?
+                    service = ?,
+                    mpesa_code = ?
                 WHERE id = ?";
             $stmt = $this->con->prepare($sql);
             $stmt->execute([
@@ -1255,6 +1259,7 @@ class Fleet
                 $this->work_order_labor_cost,
                 $this->work_order_parts_cost,
                 $serviceInput,
+                $this->work_order_mpesa_code,
                 $this->work_order_id,
             ]);
 
