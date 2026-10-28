@@ -273,6 +273,105 @@ class Home
         return $stats;
     }
 
+    public function get_current_month_revenue_by_agents($month, $year)
+    {
+        $query = "
+               SELECT
+                    b.account_id, a.name AS account_name,
+                    SUM(CASE WHEN b.status = 'complete' THEN total ELSE 0 END) AS realized_revenue,
+                    SUM(CASE WHEN b.status IN ('active','upcoming') THEN total ELSE 0 END) AS potential_revenue
+                FROM bookings b
+                JOIN accounts a ON b.account_id = a.id
+                WHERE MONTH(start_date) = :month
+                  AND YEAR(start_date) = :year
+                  AND b.deleted = 'false'
+                GROUP BY b.account_id;
+        ";
+
+        $stmt = $this->con->prepare($query);
+        $stmt->bindParam(':month', $month, PDO::PARAM_INT);
+        $stmt->bindParam(':year', $year, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    public function get_current_month_booking_count_by_agents($month, $year)
+    {
+        $query = "
+               SELECT
+                    b.account_id, a.name AS account_name,
+                    SUM(CASE WHEN b.status = 'complete' THEN 1 ELSE 0 END) AS completed_count,
+                    SUM(CASE WHEN b.status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_count,
+                    SUM(CASE WHEN b.status = 'active' THEN 1 ELSE 0 END) AS active_count,
+                    SUM(CASE WHEN b.status = 'upcoming' THEN 1 ELSE 0 END) AS upcoming_count
+                FROM bookings b
+                JOIN accounts a ON b.account_id = a.id
+                WHERE MONTH(start_date) = :month
+                  AND YEAR(start_date) = :year
+                  AND b.deleted = 'false'
+                GROUP BY b.account_id;
+
+        ";
+
+        $stmt = $this->con->prepare($query);
+        $stmt->bindParam(':month', $month, PDO::PARAM_INT);
+        $stmt->bindParam(':year', $year, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function get_current_month_completion_rate_by_agents($month, $year)
+    {
+        $query = "
+               SELECT
+                    b.account_id,
+                    a.name AS account_name,
+                    ROUND(
+                      (SUM(CASE WHEN b.status = 'complete' THEN 1 ELSE 0 END) /
+                       COUNT(*)) * 100, 2
+                    ) AS completion_rate
+                FROM bookings b
+                JOIN accounts a ON b.account_id = a.id
+                WHERE MONTH(b.start_date) = :month
+                  AND YEAR(b.start_date) = :year
+                  AND b.deleted = 'false'
+                GROUP BY b.account_id, a.name
+                ORDER BY completion_rate DESC
+        ";
+
+        $stmt = $this->con->prepare($query);
+        $stmt->bindParam(':month', $month, PDO::PARAM_INT);
+        $stmt->bindParam(':year', $year, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function get_current_month_vehicle_performance($month, $year)
+    {
+        $query = "
+               SELECT
+                    v.id,
+                    CONCAT(v.make, ' ', v.model, ' ', v.number_plate) AS vehicle,
+                    COUNT(b.id) AS completed_bookings,
+                    SUM(CAST(b.total AS DECIMAL(10,2))) AS total_revenue,
+                    ROUND(SUM(CAST(b.total AS DECIMAL(10,2))) / COUNT(b.id), 2) AS avg_income_per_booking
+                FROM bookings b
+                JOIN vehicle_basics v ON b.vehicle_id = v.id
+                WHERE b.status = 'complete'
+                  AND MONTH(b.start_date) = :month
+                  AND YEAR(b.start_date) = :year
+                  AND b.deleted = 'false'
+                GROUP BY v.id, v.make, v.model, v.number_plate
+                ORDER BY total_revenue DESC
+
+        ";
+
+        $stmt = $this->con->prepare($query);
+        $stmt->bindParam(':month', $month, PDO::PARAM_INT);
+        $stmt->bindParam(':year', $year, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     private function get_driver_deliveries($driverId)
     {
         $stmt = $this->con->prepare("

@@ -7,6 +7,8 @@ $db = (new Database())->connect();
 
 // For web, you may not need agent_id — instead, use account_id or global stats
 $data     = json_decode(file_get_contents("php://input"));
+$month    = $data->month ?? date('n'); // default current month
+$year     = $data->year ?? date('Y');  // default current year
 $agent_id = $data->account_id ?? null;
 
 if (! $agent_id) {
@@ -17,22 +19,30 @@ if (! $agent_id) {
 $home           = new Home($db);
 $home->agent_id = $agent_id;
 
-$stats = $home->get_web_stats();
+$stats                              = $home->get_web_stats();
+$currentMonthRevenueByAgents        = $home->get_current_month_revenue_by_agents($month, $year); // Fetch realized revenue for each agent (current month)
+$currentMonthBookingCountByAgents   = $home->get_current_month_booking_count_by_agents($month, $year);
+$currentMonthCompletionRateByAgents = $home->get_current_month_completion_rate_by_agents($month, $year);
+$currentMonthVehiclePerformance     = $home->get_current_month_vehicle_performance($month, $year);
 
 $response = [
     "status"    => "Success",
     "message"   => "Dashboard stats retrieved",
     "dashboard" => [
         "base" => [
-            "active_bookings"     => $stats["active_bookings"],
-            "upcoming_bookings"   => $stats["upcoming_bookings"],
-            "revenue_total"       => $stats["revenue_total"],
-            "recent_bookings"     => $stats["recent_bookings"],
-            "available_vehicles"  => $stats["available_vehicles"],
-            "top_customers"       => $stats["top_customers"],
-            "top_vehicles"        => $stats["top_vehicles"],
-            "revenue_by_customer" => $stats["revenue_by_customer"],
-            "revenue_by_vehicle"  => $stats["revenue_by_vehicle"],
+            "active_bookings"                         => $stats["active_bookings"],
+            "upcoming_bookings"                       => $stats["upcoming_bookings"],
+            "revenue_total"                           => $stats["revenue_total"],
+            "recent_bookings"                         => $stats["recent_bookings"],
+            "available_vehicles"                      => $stats["available_vehicles"],
+            "top_customers"                           => $stats["top_customers"],
+            "top_vehicles"                            => $stats["top_vehicles"],
+            "revenue_by_customer"                     => $stats["revenue_by_customer"],
+            "revenue_by_vehicle"                      => $stats["revenue_by_vehicle"],
+            "current_month_revenue_by_agents"         => $currentMonthRevenueByAgents,
+            "current_month_booking_count_by_agents"   => $currentMonthBookingCountByAgents,
+            "current_month_completion_rate_by_agents" => $currentMonthCompletionRateByAgents,
+            "current_month_vehicle_performance"       => $currentMonthVehiclePerformance,
         ],
     ],
 ];

@@ -44,7 +44,9 @@ class Booking
     public $out_capital;
     public $driver_fee;
     public $fuel;
-    public $url; // name of the bookings video
+    public $url;            // name of the bookings video
+    public $payment_amount; // amount of a booking_payment
+    public $payment_ref;    // reference number of a booking_payment
     public $override;
     public $duration;
     public $created_at;
@@ -252,6 +254,44 @@ class Booking
         }
 
         return $stmt;
+    }
+    // ------------------------------------ BOOKING PAYMENTS ------------------------------------
+
+    public function createBookingPayment()
+    {
+        // Step 1: Insert payment record without payment_no
+        $query = "INSERT INTO booking_payments (booking_id, amount, ref) VALUES (?, ?, ?)";
+        $stmt  = $this->con->prepare($query);
+        $stmt->execute([$this->id, $this->payment_amount, $this->payment_ref]);
+
+        // Step 2: Get last inserted ID
+        $id = $this->con->lastInsertId();
+
+        // Step 3: Generate payment_no like BP-007
+        $payment_no = sprintf("BP-%03d", $id);
+
+        // Step 4: Update record with payment_no
+        $updateQuery = "UPDATE booking_payments SET payment_no = ? WHERE id = ?";
+        $updateStmt  = $this->con->prepare($updateQuery);
+        $updateStmt->execute([$payment_no, $id]);
+
+        // Step 5: Return the created record
+        return [
+            "id"         => $id,
+            "booking_id" => $this->id,
+            "payment_no" => $this->payment_no,
+            "amount"     => $this->payment_amount,
+            "ref"        => $this->payment_ref,
+            "created_at" => date("Y-m-d H:i:s"),
+        ];
+    }
+
+    public function getBookingPayments()
+    {
+        $query = "SELECT * FROM booking_payments WHERE booking_id = ? ORDER BY created_at DESC";
+        $stmt  = $this->con->prepare($query);
+        $stmt->execute([$this->id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     // get completed agent bookings for the current month

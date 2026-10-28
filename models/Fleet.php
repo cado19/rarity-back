@@ -1159,6 +1159,38 @@ class Fleet
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // get aggregate of total of work orders for all vehicles
+    public function getVehicleWorkOrderStats($limit = 10, $offset = 0)
+    {
+        $query = "
+        SELECT
+            v.id AS vehicle_id,
+            v.make,
+            v.model,
+            v.number_plate,
+            COALESCE(SUM(wo.total_cost), 0) AS total_cost
+        FROM vehicle_basics v
+        LEFT JOIN work_orders wo ON v.id = wo.vehicle_id AND wo.deleted = 'false'
+        GROUP BY v.id, v.make, v.model, v.number_plate
+        ORDER BY total_cost DESC
+        LIMIT :limit OFFSET :offset
+    ";
+
+        $stmt = $this->con->prepare($query);
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getVehicleWorkOrderCount()
+    {
+        $query = "SELECT COUNT(DISTINCT v.id) AS total FROM vehicle_basics v";
+        $stmt  = $this->con->prepare($query);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    }
+
     public function read_work_order_with_items()
     {
         // Fetch the work order itself
