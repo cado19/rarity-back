@@ -21,6 +21,7 @@ $data = json_decode(file_get_contents('php://input'));
 
 // Assign booking properties
 $booking->id         = $data->booking_id;
+$booking->account_id = $data->account_id;
 $booking->c_id       = $data->customer_id;
 $booking->vehicle_id = $data->vehicle_id;
 $booking->d_id       = $data->driver_id;

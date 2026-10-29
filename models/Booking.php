@@ -738,6 +738,7 @@ class Booking
         $sql = "UPDATE bookings
             SET vehicle_id = ?,
                 customer_id = ?,
+                account_id = ?,
                 account_driver_id = ?,
                 start_date = ?,
                 end_date = ?,
@@ -756,6 +757,7 @@ class Booking
         return $stmt->execute([
             $this->vehicle_id,
             $this->c_id,
+            $this->account_id,
             $this->d_id,
             $this->start_date,
             $this->end_date,
