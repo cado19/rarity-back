@@ -878,7 +878,7 @@ class Fleet
 
         try {
             $this->con->beginTransaction();
-            $query = "SELECT vb.id, vb.make, vb.model, vb.number_plate, vp.daily_rate
+            $query = "SELECT vb.id, vb.make, vb.model, vb.number_plate, vp.daily_rate, vb.category_id
                   FROM vehicle_basics vb
                   LEFT JOIN vehicle_pricing vp ON vb.id = vp.vehicle_id
                   WHERE vb.deleted = ? AND vb.partner_id IS NULL

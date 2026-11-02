@@ -85,7 +85,7 @@ class Account
         $sql = "SELECT a.id, a.name, a.email, a.phone_no, a.country, r.name AS role
             FROM accounts a
             INNER JOIN roles r ON a.role_id = r.id
-            WHERE a.role_id != 0
+            WHERE a.id != 5
             ORDER BY a.id DESC";
 
         $stmt = $this->con->prepare($sql);

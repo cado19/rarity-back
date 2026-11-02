@@ -37,6 +37,7 @@ if ($num > 0) {
         // single post item array
         $fleet_item = [
             'id'           => $id,
+            'category_id'  => $category_id,
             'make'         => $make,
             'model'        => $model,
             'number_plate' => $number_plate,
