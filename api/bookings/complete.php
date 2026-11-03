@@ -19,9 +19,9 @@ try {
     if (! isset($data->id)) {
         throw new Exception("Missing booking id");
     }
-    if (! isset($data->mileage)) {
-        throw new Exception("Mileage is required");
-    }
+    // if (! isset($data->mileage)) {
+    //     throw new Exception("Mileage is required");
+    // }
 
     $booking->id         = intval($data->id);
     $booking->vehicle_id = intval($data->vehicle_id ?? 0); // ensure vehicle_id is passed or fetched

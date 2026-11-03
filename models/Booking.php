@@ -551,29 +551,29 @@ class Booking
             $maintenance    = $vehicle['maintenance'] ?? 'no';
 
             // 2. Validation: new mileage must be >= current mileage
-            if ($this->mileage < $vehicleMileage) {
-                throw new Exception("Mileage entered ({$this->mileage}) is less than current vehicle mileage ({$vehicleMileage})");
-            }
+            // if ($this->mileage < $vehicleMileage) {
+            //     throw new Exception("Mileage entered ({$this->mileage}) is less than current vehicle mileage ({$vehicleMileage})");
+            // }
 
             // 3. Calculate booking mileage (distance driven)
-            $bookingMileage = 0;
-            if ($vehicleMileage > 0) {
-                $bookingMileage = $this->mileage - $vehicleMileage;
-            }
+            // $bookingMileage = 0;
+            // if ($vehicleMileage > 0) {
+            //     $bookingMileage = $this->mileage - $vehicleMileage;
+            // }
 
             // 4. Update booking status + mileage
-            $sqlBooking  = "UPDATE bookings SET status = ?, mileage = ? WHERE id = ?";
+            $sqlBooking  = "UPDATE bookings SET status = ? WHERE id = ?";
             $stmtBooking = $this->con->prepare($sqlBooking);
-            $stmtBooking->execute(["complete", $bookingMileage, $this->id]);
+            $stmtBooking->execute(["complete", $this->id]);
 
             // 5. Update vehicle mileage + availability
             $availability = ($maintenance === 'yes') ? 'unavailable' : 'available';
 
-            $sqlVehicle = "UPDATE vehicle_basics
-                        SET mileage = ?, availability = ?
-                        WHERE id = ?";
-            $stmtVehicle = $this->con->prepare($sqlVehicle);
-            $stmtVehicle->execute([$this->mileage, $availability, $this->vehicle_id]);
+            // $sqlVehicle = "UPDATE vehicle_basics
+            //             SET mileage = ?, availability = ?
+            //             WHERE id = ?";
+            // $stmtVehicle = $this->con->prepare($sqlVehicle);
+            // $stmtVehicle->execute([$this->mileage, $availability, $this->vehicle_id]);
 
             $this->con->commit();
 
