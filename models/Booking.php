@@ -79,6 +79,7 @@ class Booking
                     vp.daily_rate,
                     COALESCE(ad.id, d.id) AS d_id,
                     COALESCE(ad.name, CONCAT(d.first_name, ' ', d.last_name)) AS driver_name,
+                    b.account_id AS account_id,
                     b.start_date,
                     b.end_date,
                     b.start_time,
@@ -595,10 +596,10 @@ class Booking
     // extend a booking
     public function extend_booking()
     {
-        $sql  = "UPDATE bookings SET end_date = ?, total = ? WHERE id = ?";
+        $sql  = "UPDATE bookings SET end_date = ?, total = ?, duration = ? WHERE id = ?";
         $stmt = $this->con->prepare($sql);
 
-        if ($stmt->execute([$this->end_date, $this->total, $this->id])) {
+        if ($stmt->execute([$this->end_date, $this->total, $this->duration, $this->id])) {
             // $this->id = $this->con->lastInsertId();
             return true;
         } else {

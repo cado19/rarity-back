@@ -224,8 +224,13 @@ class Account
         $sql  = "SELECT rate FROM agent_rates WHERE agent_id = ? AND category_id = ? LIMIT 0,1";
         $stmt = $this->con->prepare($sql);
         $stmt->execute([$this->id, $this->category_id]);
-        $row              = $stmt->fetch(PDO::FETCH_ASSOC);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (! $row) {
+            return false;
+        }
         $this->agent_rate = $row['rate'];
+        return true;
     }
 
     public function fetch_role_id()

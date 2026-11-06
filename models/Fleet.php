@@ -20,6 +20,7 @@ class Fleet
     public $fuel;
     public $transmission;
     public $category_id;
+    public $category_name;
     public $colour;
     public $drive_train;
     public $capacity;

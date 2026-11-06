@@ -48,6 +48,15 @@ if (! empty($data->custom_rate) && $data->custom_rate > 0) {
     $account->id          = $data->account_id;
     $account->category_id = $fleet->category_id;
     $account->fetch_agent_rate();
+
+    if (! $account->fetch_agent_rate()) {
+        echo json_encode([
+            "status"  => "Error",
+            "message" => "No agent rate has been configured for this vehicle category for selected agent. Please contact an administrator or set a rate.",
+        ]);
+        exit;
+    }
+
     $account->fetch_role_id();
 
     if ($data->custom_rate < $account->agent_rate) {

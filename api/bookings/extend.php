@@ -36,9 +36,10 @@ $booking->end_date = $data->newDate;
 // get start date so as to calculate the duration
 $booking->get_start_date();
 
-$start_date = strtotime($booking->start_date);
-$end_date   = strtotime($booking->end_date);
-$duration   = ($end_date - $start_date) / 86400;
+$start_date        = strtotime($booking->start_date);
+$end_date          = strtotime($booking->end_date);
+$duration          = ($end_date - $start_date) / 86400;
+$booking->duration = $duration;
 // check if custom rate was used and use that to calculate total.
 $booking->get_custom_rate();
 
