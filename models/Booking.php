@@ -44,7 +44,8 @@ class Booking
     public $out_capital;
     public $driver_fee;
     public $fuel;
-    public $url;            // name of the bookings video
+    public $url; // name of the bookings video
+    public $payment_id;
     public $payment_amount; // amount of a booking_payment
     public $payment_ref;    // reference number of a booking_payment
     public $override;
@@ -287,6 +288,25 @@ class Booking
         ];
     }
 
+    public function updateBookingPayment()
+    {
+        $query = "
+        UPDATE booking_payments
+        SET
+            amount = ?,
+            ref = ?
+        WHERE id = ?
+    ";
+
+        $stmt = $this->con->prepare($query);
+
+        return $stmt->execute([
+            $this->payment_amount,
+            $this->payment_ref,
+            $this->payment_id,
+        ]);
+    }
+
     public function getBookingPayments()
     {
         $query = "SELECT * FROM booking_payments WHERE booking_id = ? ORDER BY created_at DESC";
@@ -294,26 +314,6 @@ class Booking
         $stmt->execute([$this->id]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-
-    // get completed agent bookings for the current month
-    // public function read_agent_complete()
-    // {
-    //     $status = "complete";
-
-    //     try {
-    //         $this->con->beginTransaction();
-
-    //         //create the query
-    //         $query = "SELECT b.id, b.booking_no, c.first_name AS c_fname, c.last_name AS c_lname, v.model, v.make, v.number_plate, v.category_id, b.start_date, b.end_date, b.status, b.total FROM customer_details c INNER JOIN bookings b ON c.id = b.customer_id INNER JOIN vehicle_basics v ON b.vehicle_id = v.id WHERE b.account_id = ? AND b.status = ? AND MONTH(b.start_date) = 11 AND YEAR(b.start_date) = 2025 ORDER BY b.created_at DESC";
-    //         $stmt  = $this->con->prepare($query);
-    //         $stmt->execute([$this->account_id, $status]);
-    //         $this->con->commit();
-    //     } catch (Exception $e) {
-    //         $this->con->rollback();
-    //     }
-
-    //     return $stmt;
-    // }
 
     // Get an agent's completed bookings
     public function read_agent_complete()

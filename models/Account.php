@@ -219,6 +219,16 @@ class Account
         return $stmt;
     }
 
+    // Fetch the category rates for selected agent based on their id
+    public function fetch_agent_rates()
+    {
+        $sql  = "SELECT r.id, r.rate AS rate, category.name AS category FROM agent_rates r JOIN vehicle_categories category ON r.category_id = category.id WHERE agent_id = ?";
+        $stmt = $this->con->prepare($sql);
+        $stmt->execute([$this->id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Fetch the specific category's rate for selected agent based on their id and category id
     public function fetch_agent_rate()
     {
         $sql  = "SELECT rate FROM agent_rates WHERE agent_id = ? AND category_id = ? LIMIT 0,1";
