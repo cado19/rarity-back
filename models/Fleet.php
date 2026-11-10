@@ -645,6 +645,22 @@ class Fleet
         }
     }
 
+    // function to delete multiple vehicles
+    public function delete_multiple($ids)
+    {
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+
+        $query = "
+        UPDATE vehicle_basics
+        SET deleted = 'true'
+        WHERE id IN ($placeholders)
+    ";
+
+        $stmt = $this->con->prepare($query);
+
+        return $stmt->execute($ids);
+    }
+
     //  ---------------------------------------- GENERAL VEHICLE READ FUNCTIONS ----------------------------------------
 
     // function to get the ids of a vehicle with a numbler plate like the onw given.
