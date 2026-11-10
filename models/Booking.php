@@ -516,6 +516,23 @@ class Booking
         }
     }
 
+    // activate multiple bookings
+    public function activate_multiple($ids)
+    {
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+
+        $query = "
+        UPDATE bookings
+        SET status = 'active'
+        WHERE id IN ($placeholders)
+          AND status = 'upcoming'
+    ";
+
+        $stmt = $this->con->prepare($query);
+
+        return $stmt->execute($ids);
+    }
+
     // cancel a booking
     public function cancel_booking()
     {
@@ -591,6 +608,23 @@ class Booking
             error_log("Error completing booking with mileage: " . $e->getMessage());
             return false;
         }
+    }
+
+    // complete multiple bookings
+    public function complete_multiple($ids)
+    {
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+
+        $query = "
+        UPDATE bookings
+        SET status = 'complete'
+        WHERE id IN ($placeholders)
+          AND status = 'active'
+    ";
+
+        $stmt = $this->con->prepare($query);
+
+        return $stmt->execute($ids);
     }
 
     // extend a booking
