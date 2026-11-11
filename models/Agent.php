@@ -136,11 +136,18 @@ class Agent
 
     public function update_rate()
     {
-        $sql = "UPDATE agent_rates SET rate = ? WHERE agent_id = ? AND category_id = ?";
+        $sql = " INSERT INTO agent_rates (
+            agent_id,
+            category_id,
+            rate
+        )
+        VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+            rate = VALUES(rate)";
         // prepare the statement
         $stmt = $this->con->prepare($sql);
 
-        if ($stmt->execute([$this->agent_rate, $this->id, $this->category_id])) {
+        if ($stmt->execute([$this->id, $this->category_id, $this->agent_rate])) {
             return true;
         } else {
             // print error if something goes wrong
