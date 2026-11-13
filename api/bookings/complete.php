@@ -24,8 +24,9 @@ try {
     // }
 
     $booking->id         = intval($data->id);
+    $booking->account_id = $data->user_id;
     $booking->vehicle_id = intval($data->vehicle_id ?? 0); // ensure vehicle_id is passed or fetched
-    $booking->mileage    = intval($data->mileage);
+                                                           // $booking->mileage    = intval($data->mileage) ?? 0;
 
     if ($booking->complete_booking_with_mileage()) {
         $response['status']  = "Success";

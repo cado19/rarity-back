@@ -153,17 +153,17 @@ class Home
 
         error_log("Roles for account {$this->agent_id}: " . json_encode($roles));
 
-        // Active bookings
+        // Active bookings for agent
         $activeStmt = $this->con->prepare("SELECT COUNT(*) as cnt FROM bookings WHERE status = 'active' AND account_id = ?");
         $activeStmt->execute([$this->agent_id]);
         $active_bookings = $activeStmt->fetch(PDO::FETCH_ASSOC)['cnt'] ?? 0;
 
-        // Upcoming bookings
+        // Upcoming bookings for agent
         $upcomingStmt = $this->con->prepare("SELECT COUNT(*) as cnt FROM bookings WHERE status = 'upcoming' AND account_id = ?");
         $upcomingStmt->execute([$this->agent_id]);
         $upcoming_bookings = $upcomingStmt->fetch(PDO::FETCH_ASSOC)['cnt'] ?? 0;
 
-        // Revenue total
+        // Revenue total for agent
         $revenueStmt = $this->con->prepare("SELECT SUM(CAST(total AS DECIMAL(10,2))) as revenue FROM bookings WHERE deleted = 'false' AND account_id = ?");
         $revenueStmt->execute([$this->agent_id]);
         $revenue_total = $revenueStmt->fetch(PDO::FETCH_ASSOC)['revenue'] ?? 0;
@@ -180,15 +180,93 @@ class Home
         $recentStmt->execute([$this->agent_id]);
         $recent_bookings = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
 
+        // ----------------- FOR COMPANY -----------------
+        // Active bookings for company
+        $companyActiveStmt = $this->con->prepare("SELECT COUNT(*) as cnt FROM bookings WHERE status = 'active'");
+        $companyActiveStmt->execute();
+        $company_active_bookings = $companyActiveStmt->fetch(PDO::FETCH_ASSOC)['cnt'] ?? 0;
+
+        // Upcoming bookings for company
+        $companyUpcomingStmt = $this->con->prepare("SELECT COUNT(*) as cnt FROM bookings WHERE status = 'upcoming'");
+        $companyUpcomingStmt->execute();
+        $company_upcoming_bookings = $companyUpcomingStmt->fetch(PDO::FETCH_ASSOC)['cnt'] ?? 0;
+
         // Available vehicles
         $vehicleStmt = $this->con->prepare("
-            SELECT v.id, v.make, v.model, v.transmission, v.fuel
+            SELECT v.id, v.make, v.model, v.number_plate
             FROM vehicle_basics v
-            WHERE v.id NOT IN (SELECT vehicle_id FROM bookings WHERE status = 'active')
-            LIMIT 3
+            WHERE v.id NOT IN (SELECT vehicle_id FROM bookings WHERE status IN ('active', 'upcoming')) AND v.deleted = 'false'
         ");
         $vehicleStmt->execute();
         $available_vehicles = $vehicleStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Available vehicles count
+        $availableCountStmt = $this->con->prepare("
+            SELECT COUNT(*) AS total
+            FROM vehicle_basics v
+            WHERE v.deleted = 'false'
+              AND v.id NOT IN (
+                  SELECT vehicle_id
+                  FROM bookings
+                  WHERE status IN ('active','upcoming')
+                    AND deleted = 'false'
+              )
+        ");
+
+        $availableCountStmt->execute();
+
+        $available_vehicles_count =
+        $availableCountStmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
+
+        // Actively booked vehicles
+        $bookedVehiclesStmt = $this->con->prepare("
+            SELECT DISTINCT
+                v.id,
+                v.make,
+                v.model,
+                v.number_plate,
+                b.status
+            FROM vehicle_basics v
+            INNER JOIN bookings b
+                ON b.vehicle_id = v.id
+            WHERE v.deleted = 'false'
+              AND b.deleted = 'false'
+              AND b.status IN ('active','upcoming')
+            ORDER BY v.make, v.model
+        ");
+
+        $bookedVehiclesStmt->execute();
+
+        $booked_vehicles =
+        $bookedVehiclesStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Total Vehicles Count
+        $totalVehiclesStmt = $this->con->prepare("
+            SELECT COUNT(*) AS total
+            FROM vehicle_basics
+            WHERE deleted = 'false'
+        ");
+
+        $totalVehiclesStmt->execute();
+
+        $total_vehicles =
+        $totalVehiclesStmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
+
+        // Booked vehicles count
+        $bookedVehiclesCountStmt = $this->con->prepare("
+            SELECT COUNT(DISTINCT vehicle_id) AS total
+            FROM bookings
+            WHERE deleted = 'false'
+              AND status IN ('active','upcoming')
+        ");
+
+        $bookedVehiclesCountStmt->execute();
+
+        $booked_vehicles_count =
+        $bookedVehiclesCountStmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
+
+        // Available vehicles count
+        $available_vehicles_count = $total_vehicles - $booked_vehicles_count;
 
         // Top customers (most bookings)
         $topCustomersStmt = $this->con->prepare("
@@ -243,15 +321,23 @@ class Home
         $revenue_by_vehicle = $revenueByVehicleStmt->fetchAll(PDO::FETCH_ASSOC);
 
         $stats = [
-            "active_bookings"     => $active_bookings,
-            "upcoming_bookings"   => $upcoming_bookings,
-            "revenue_total"       => $revenue_total,
-            "recent_bookings"     => $recent_bookings,
-            "available_vehicles"  => $available_vehicles,
-            "top_customers"       => $top_customers,
-            "top_vehicles"        => $top_vehicles,
-            "revenue_by_customer" => $revenue_by_customer,
-            "revenue_by_vehicle"  => $revenue_by_vehicle,
+            "active_bookings"           => $active_bookings,
+            "upcoming_bookings"         => $upcoming_bookings,
+            "revenue_total"             => $revenue_total,
+            "recent_bookings"           => $recent_bookings,
+
+            "total_vehicles"            => $total_vehicles,
+            "booked_vehicles_count"     => $booked_vehicles_count,
+            "available_vehicles_count"  => $available_vehicles_count,
+            "booked_vehicles"           => $booked_vehicles,
+            "company_active_bookings"   => $company_active_bookings,
+            "company_upcoming_bookings" => $company_upcoming_bookings,
+
+            "available_vehicles"        => $available_vehicles,
+            "top_customers"             => $top_customers,
+            "top_vehicles"              => $top_vehicles,
+            "revenue_by_customer"       => $revenue_by_customer,
+            "revenue_by_vehicle"        => $revenue_by_vehicle,
         ];
 
         // Role-specific stats

@@ -59,6 +59,128 @@ class Booking
         $this->con = $db;
     }
 
+    // log booking activities
+    public function log_history(
+        $booking_id,
+        $changed_by,
+        $action,
+        $old_data,
+        $new_data
+    ) {
+        $sql = "
+        INSERT INTO booking_history (
+            booking_id,
+            changed_by,
+            action,
+            old_data,
+            new_data
+        )
+        VALUES (?, ?, ?, ?, ?)
+    ";
+
+        $stmt = $this->con->prepare($sql);
+
+        return $stmt->execute([
+            $booking_id,
+            $changed_by,
+            $action,
+            $old_data !== null ? json_encode($old_data) : null,
+            $new_data !== null ? json_encode($new_data) : null,
+        ]);
+    }
+
+    // Fetch human-readable booking history (all or by booking_id)
+    public function get_history($booking_id = null)
+    {
+        $sql = "
+        SELECT
+            bh.id,
+            bh.booking_id,
+            b.booking_no,
+            bh.changed_by,
+            COALESCE(a.name, 'Unknown User') AS performed_by,
+            bh.action,
+            bh.old_data,
+            bh.new_data,
+            bh.created_at
+        FROM booking_history bh
+        LEFT JOIN accounts a ON bh.changed_by = a.id
+        LEFT JOIN bookings b ON bh.booking_id = b.id
+    ";
+
+        $params = [];
+        if ($booking_id !== null) {
+            $sql      .= " WHERE bh.booking_id = ?";
+            $params[]  = $booking_id;
+        }
+
+        $sql .= " ORDER BY bh.id DESC";
+
+        $stmt = $this->con->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $formatted = [];
+
+        foreach ($rows as $row) {
+            $old = $row['old_data'] ? json_decode($row['old_data'], true) : [];
+            $new = $row['new_data'] ? json_decode($row['new_data'], true) : [];
+
+            $bookingLabel = $row['booking_no'] ? "Booking #{$row['booking_no']}" : "Booking ID {$row['booking_id']}";
+            $user         = $row['performed_by'];
+
+            // Build human-readable description based on action
+            switch ($row['action']) {
+                case 'created':
+                    $description = "{$user} created {$bookingLabel}";
+                    break;
+
+                case 'activate':
+                    $description = "{$user} activated {$bookingLabel}";
+                    break;
+
+                case 'complete':
+                    $description = "{$user} marked {$bookingLabel} as complete";
+                    break;
+
+                case 'cancel':
+                    $description = "{$user} cancelled {$bookingLabel}";
+                    break;
+
+                case 'extend':
+                    $oldDate     = $old['end_date'] ?? 'N/A';
+                    $newDate     = $new['end_date'] ?? 'N/A';
+                    $description = "{$user} extended {$bookingLabel} end date from {$oldDate} to {$newDate}";
+                    break;
+
+                case 'revert_status':
+                case 'revert':
+                    $oldStatus   = $old['status'] ?? 'N/A';
+                    $newStatus   = $new['status'] ?? 'N/A';
+                    $description = "{$user} reverted {$bookingLabel} status from {$oldStatus} to {$newStatus}";
+                    break;
+
+                default:
+                    $description = "{$user} performed '{$row['action']}' on {$bookingLabel}";
+                    break;
+            }
+
+            $formatted[] = [
+                'id'           => (int) $row['id'],
+                'booking_id'   => (int) $row['booking_id'],
+                'booking_no'   => $row['booking_no'],
+                'performed_by' => $user,
+                'action'       => $row['action'],
+                'description'  => $description,
+                'old_data'     => $old,
+                'new_data'     => $new,
+                'created_at'   => $row['created_at'],
+            ];
+        }
+
+        return $formatted;
+    }
+
     // get single booking
     public function read_single()
     {
@@ -386,6 +508,23 @@ class Booking
             $this->accident_vehicle_reg,
         ])) {
             $this->id = $this->con->lastInsertId();
+
+            // Log booking creation
+            $this->log_history(
+                $this->id,
+                $this->account_id,
+                'created',
+                null, // No previous state existed
+                [
+                    'status'      => $status,
+                    'customer_id' => $this->c_id,
+                    'vehicle_id'  => $this->vehicle_id,
+                    'start_date'  => $this->start_date,
+                    'end_date'    => $this->end_date,
+                    'total'       => $this->total,
+                ]
+            );
+
             return true;
         }
         return false;
@@ -479,13 +618,24 @@ class Booking
         try {
             $this->con->beginTransaction();
 
-            // 1. Update booking status
+            // 1. Fetch current booking status
+            $currentStmt = $this->con->prepare("
+                SELECT status
+                FROM bookings
+                WHERE id = ?
+            ");
+
+            $currentStmt->execute([$this->id]);
+
+            $currentBooking = $currentStmt->fetch(PDO::FETCH_ASSOC);
+
+            // 2. Update booking status
             $status      = "active";
             $sqlBooking  = "UPDATE bookings SET status = ? WHERE id = ?";
             $stmtBooking = $this->con->prepare($sqlBooking);
             $stmtBooking->execute([$status, $this->id]);
 
-            // 2. Get vehicle_id for this booking
+            // 3. Get vehicle_id for this booking
             $sqlVehicle  = "SELECT vehicle_id FROM bookings WHERE id = ?";
             $stmtVehicle = $this->con->prepare($sqlVehicle);
             $stmtVehicle->execute([$this->id]);
@@ -495,16 +645,29 @@ class Booking
                 throw new Exception("Vehicle not found for booking {$this->id}");
             }
 
-            // 3. Update vehicle availability
+            // 4. Update vehicle availability
             $sqlUpdateVehicle  = "UPDATE vehicle_basics SET availability = 'unavailable' WHERE id = ?";
             $stmtUpdateVehicle = $this->con->prepare($sqlUpdateVehicle);
             $stmtUpdateVehicle->execute([$vehicle_id]);
 
-            // 4. Log status change with user_id
+            // 5. Log status change with user_id
             $sqlLog = "INSERT INTO vehicle_status_history (vehicle_id, status, changed_by, notes)
                    VALUES (?, ?, ?, ?)";
             $stmtLog = $this->con->prepare($sqlLog);
             $stmtLog->execute([$vehicle_id, "booked", $this->account_id, "Booking {$this->id} activated"]);
+
+            // 6. Log booking status history
+            $this->log_history(
+                $this->id,
+                $this->account_id,
+                'activate',
+                [
+                    'status' => $currentBooking['status'],
+                ],
+                [
+                    'status' => 'active',
+                ]
+            );
 
             $this->con->commit();
             return true;
@@ -536,12 +699,32 @@ class Booking
     // cancel a booking
     public function cancel_booking()
     {
-        $status = "cancelled";
-        $sql    = "UPDATE bookings SET status = ? WHERE id = ?";
-        $stmt   = $this->con->prepare($sql);
+        $currentStmt = $this->con->prepare("
+            SELECT status
+            FROM bookings
+            WHERE id = ?
+        ");
+
+        $currentStmt->execute([$this->id]);
+
+        $currentBooking = $currentStmt->fetch(PDO::FETCH_ASSOC);
+        $status         = "cancelled";
+        $sql            = "UPDATE bookings SET status = ? WHERE id = ?";
+        $stmt           = $this->con->prepare($sql);
 
         if ($stmt->execute([$status, $this->id])) {
             // $this->id = $this->con->lastInsertId();
+            $this->log_history(
+                $this->id,
+                $this->account_id,
+                'cancel',
+                [
+                    'status' => $currentBooking['status'],
+                ],
+                [
+                    'status' => 'cancelled',
+                ]
+            );
             return true;
         } else {
             // print error if something goes wrong
@@ -555,6 +738,17 @@ class Booking
     {
         try {
             $this->con->beginTransaction();
+
+            $currentStmt = $this->con->prepare("
+                SELECT status
+                FROM bookings
+                WHERE id = ?
+            ");
+
+            $currentStmt->execute([$this->id]);
+
+            $currentBooking =
+            $currentStmt->fetch(PDO::FETCH_ASSOC);
 
             // 1. Fetch vehicle basics (including current mileage + maintenance flag)
             $fleet     = new Fleet($this->con);
@@ -595,12 +789,25 @@ class Booking
 
             $this->con->commit();
 
-            // 6. Log status change with user_id
+            // 6. Log vehicle status change with user_id
             $statusLabel = ($maintenance === 'yes') ? "maintenance" : "available";
             $sqlLog      = "INSERT INTO vehicle_status_history (vehicle_id, status, changed_by, notes)
            VALUES (?, ?, ?, ?)";
             $stmtLog = $this->con->prepare($sqlLog);
             $stmtLog->execute([$this->vehicle_id, $statusLabel, $this->account_id, "Booking {$this->id} completed"]);
+
+            // 8. Log booking status change with user_id
+            $this->log_history(
+                $this->id,
+                $this->account_id,
+                'complete',
+                [
+                    'status' => $currentBooking['status'],
+                ],
+                [
+                    'status' => 'complete',
+                ]
+            );
             return true;
 
         } catch (Exception $e) {
@@ -627,20 +834,127 @@ class Booking
         return $stmt->execute($ids);
     }
 
+    // revert the status of a booking
+    public function revert_status()
+    {
+        try {
+            $this->con->beginTransaction();
+            // 1. Get the booking's current status before reverting
+            $currentStmt = $this->con->prepare("SELECT status FROM bookings WHERE id = ?");
+            $currentStmt->execute([$this->id]);
+            $currentBooking = $currentStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (! $currentBooking) {
+                throw new Exception("Booking not found");
+            }
+
+            // 2. Get the latest status change
+            $statusChangeSql  = "SELECT * FROM booking_history WHERE booking_id = ? AND action IN ('activate','complete','cancel') ORDER BY id DESC LIMIT 1";
+            $statusChangeStmt = $this->con->prepare($statusChangeSql);
+            $statusChangeStmt->execute([$this->id]);
+
+            $statusChange = $statusChangeStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (! $statusChange || empty($statusChange['old_data'])) {
+                return false;
+            }
+
+            // Decode JSON column to get the previous status
+            $oldData        = json_decode($statusChange['old_data'], true);
+            $previousStatus = $oldData['status'] ?? null;
+
+            if (! $previousStatus) {
+                return false;
+            }
+
+            // 3. Update the status of the booking
+            $query = "
+            UPDATE bookings
+            SET
+                status = ?
+            WHERE id = ?
+        ";
+
+            $stmt = $this->con->prepare($query);
+
+            $stmt->execute([$previousStatus, $this->id]);
+
+            // 4. Log revert action in booking history
+            $this->log_history($this->id, $this->account_id, 'revert', ['status' => $currentBooking['status']], ['status' => $previousStatus]);
+
+            $this->con->commit();
+
+            return [
+                'old_status' => $currentBooking['status'],
+                'new_status' => $previousStatus,
+            ];
+        } catch (Exception $e) {
+            $this->con->rollBack();
+            error_log("Error reverting booking status: " . $e->getMessage());
+            return false;
+        }
+
+    }
+
     // extend a booking
     public function extend_booking()
     {
-        $sql  = "UPDATE bookings SET end_date = ?, total = ?, duration = ? WHERE id = ?";
-        $stmt = $this->con->prepare($sql);
+        try {
+            // 1. Fetch existing values before updating
+            $currentStmt = $this->con->prepare("
+            SELECT end_date, duration, total, status
+            FROM bookings
+            WHERE id = ?
+        ");
+            $currentStmt->execute([$this->id]);
+            $currentBooking = $currentStmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($stmt->execute([$this->end_date, $this->total, $this->duration, $this->id])) {
-            // $this->id = $this->con->lastInsertId();
+            // 2. Update the booking
+            $sql  = "UPDATE bookings SET end_date = ?, total = ?, duration = ? WHERE id = ?";
+            $stmt = $this->con->prepare($sql);
+            $stmt->execute([
+                $this->end_date,
+                $this->total,
+                $this->duration,
+                $this->id,
+            ]);
+
+            // 3. Log the extension in booking_history
+            $this->log_history(
+                $this->id,
+                $this->account_id,
+                'extend',
+                [
+                    'end_date' => $currentBooking['end_date'],
+                    'duration' => (int) $currentBooking['duration'],
+                    'total'    => (float) $currentBooking['total'],
+                ],
+                [
+                    'end_date' => $this->end_date,
+                    'duration' => (int) $this->duration,
+                    'total'    => (float) $this->total,
+                ]
+            );
+
+            $this->con->commit();
             return true;
-        } else {
-            // print error if something goes wrong
-            printf("Error :  % s . \n ", $stmt->error);
+        } catch (Exception $e) {
+            $this->con->rollBack();
+            error_log("Error extending booking: " . $e->getMessage());
             return false;
         }
+        // $sql  = "UPDATE bookings SET end_date = ?, total = ?, duration = ? WHERE id = ?";
+        // $stmt = $this->con->prepare($sql);
+
+        // if ($stmt->execute([$this->end_date, $this->total, $this->duration, $this->id])) {
+        //     // $this->id = $this->con->lastInsertId();
+        //     $this->log_history($this->id, $this->account_id, 'extend', ['status' => $currentBooking['status']], ['status' => $previousStatus])
+        //     return true;
+        // } else {
+        //     // print error if something goes wrong
+        //     printf("Error :  % s . \n ", $stmt->error);
+        //     return false;
+        // }
     }
 
     // update vehicle fuel details a booking

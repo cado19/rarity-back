@@ -30,8 +30,9 @@ $fleet   = new Fleet($db);
 // get data from post request(end_date and id);
 $data = json_decode(file_get_contents('php://input'));
 
-$booking->id       = $data->id;
-$booking->end_date = $data->newDate;
+$booking->id         = $data->id;
+$booking->account_id = $data->userId;
+$booking->end_date   = $data->newDate;
 
 // get start date so as to calculate the duration
 $booking->get_start_date();
