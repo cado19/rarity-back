@@ -23,7 +23,8 @@ if (! isset($data['id'])) {
     exit;
 }
 
-$booking->id = $data['id'];
+$booking->id         = $data['id'];
+$booking->account_id = $data['user_id'];
 
 $response = [];
 
