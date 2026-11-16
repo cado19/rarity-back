@@ -30,6 +30,17 @@ $booking->end_date   = $data->end_date;
 $booking->start_time = $data->start_time;
 $booking->end_time   = $data->end_time;
 
+// Fetch old booking for logging history
+$oldBooking = $booking->read_single();
+
+if (! $oldBooking) {
+    echo json_encode([
+        "status"  => "Error",
+        "message" => "Booking not found",
+    ]);
+    exit;
+}
+
 // Duration calculation with override
 $duration = Booking::calculateDuration(
     $booking->start_date,
@@ -59,7 +70,7 @@ if (! empty($data->custom_rate) && $data->custom_rate > 0) {
 
     $account->fetch_role_id();
 
-    if ($data->custom_rate < $account->agent_rate) {
+    if ($data->custom_rate > $account->agent_rate) {
         echo json_encode([
             "status"  => "Error",
             "message" => "Set amount is too low. Min for selected vehicle: {$account->agent_rate}",
@@ -100,6 +111,52 @@ if ($booking->d_id == 25) {
 
 // Save booking update
 if ($booking->update()) {
+    // fetch the new details after the update
+    $newBooking = $booking->read_single();
+
+    // Compare old vs new values
+    $oldData = [];
+    $newData = [];
+
+    $fields = [
+        'vehicle_id',
+        'customer_id',
+        'account_id',
+        'account_driver_id',
+        'start_date',
+        'end_date',
+        'start_time',
+        'end_time',
+        'duration',
+        'custom_rate',
+        'subtotal',
+        'vat',
+        'total',
+        'driver_fee',
+    ];
+
+    foreach ($fields as $field) {
+        $oldValue = $oldBooking[$field] ?? null;
+        $newValue = $newBooking[$field] ?? null;
+
+        if ((string) $oldValue !== (string) $newValue) {
+            $oldData[$field] = $oldValue;
+            $newData[$field] = $newValue;
+        }
+    }
+
+    // Log only when something has changed
+
+    if (! empty($oldData)) {
+        $booking->log_history(
+            $booking->id,         // booking_id
+            $booking->account_id, // changed by
+            'edit_booking',       // action
+            $oldData,
+            $newData
+        );
+    }
+    // Response
     echo json_encode([
         "status"  => "Success",
         "message" => "Successfully updated booking",
