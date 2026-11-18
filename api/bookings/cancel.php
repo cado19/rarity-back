@@ -5,12 +5,14 @@
 include_once '../../config/cors.php';
 include_once '../../config/Database.php';
 include_once '../../models/Booking.php';
+include_once '../../models/Fleet.php';
 
 // Instantiate The DB and connect to it
 $database = new Database();
 $db       = $database->connect();
 
 $booking = new Booking($db);
+$fleet   = new Fleet($db);
 
 // Expect JSON body
 $data = json_decode(file_get_contents("php://input"), true);

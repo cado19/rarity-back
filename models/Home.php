@@ -359,6 +359,136 @@ class Home
         return $stats;
     }
 
+    // Get company booking history
+    public function get_recent_booking_history($limit = 10)
+    {
+        $sql = "
+        SELECT
+            bh.id,
+            bh.booking_id,
+            bh.action,
+            bh.old_data,
+            bh.new_data,
+            bh.created_at,
+            b.booking_no,
+            COALESCE(a.name,'Unknown User') AS changed_by
+        FROM booking_history bh
+        LEFT JOIN bookings b
+            ON b.id = bh.booking_id
+        LEFT JOIN accounts a
+            ON a.id = bh.changed_by
+        ORDER BY bh.created_at DESC
+        LIMIT ?
+    ";
+
+        $stmt = $this->con->prepare($sql);
+        $stmt->bindValue(1, (int) $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $formatted = [];
+
+        foreach ($rows as $row) {
+
+            $old = ! empty($row['old_data'])
+                ? json_decode($row['old_data'], true)
+                : [];
+
+            $new = ! empty($row['new_data'])
+                ? json_decode($row['new_data'], true)
+                : [];
+
+            $user    = $row['changed_by'];
+            $booking = $row['booking_no'];
+
+            switch ($row['action']) {
+
+                case 'activate':
+                    $description =
+                        "{$user} activated booking {$booking}";
+                    break;
+
+                case 'complete':
+                    $description =
+                        "{$user} completed booking {$booking}";
+                    break;
+
+                case 'cancel':
+                    $description =
+                        "{$user} cancelled booking {$booking}";
+                    break;
+
+                case 'revert':
+                    $description =
+                        "{$user} reverted booking {$booking}";
+                    break;
+
+                case 'extend':
+                    $oldDate = $old['end_date'] ?? '';
+                    $newDate = $new['end_date'] ?? '';
+
+                    $description =
+                        "{$user} extended booking {$booking} from {$oldDate} to {$newDate}";
+                    break;
+
+                case 'edit_booking':
+
+                    $changes = count($new);
+
+                    $description =
+                        "{$user} updated {$changes} field(s) on booking {$booking}";
+
+                    break;
+
+                default:
+                    $description =
+                        "{$user} updated booking {$booking}";
+            }
+
+            $formatted[] = [
+                'id'          => $row['id'],
+                'booking_id'  => $row['booking_id'],
+                'booking_no'  => $row['booking_no'],
+                'action'      => $row['action'],
+                'description' => $description,
+                'changed_by'  => $row['changed_by'],
+                'created_at'  => $row['created_at'],
+            ];
+        }
+
+        return $formatted;
+    }
+
+    public function get_recent_vehicle_history($limit = 10)
+    {
+        $sql = "
+        SELECT
+            vsh.id,
+            vsh.status,
+            vsh.notes,
+            vsh.created_at,
+            vb.id AS vehicle_id,
+            vb.make,
+            vb.model,
+            vb.number_plate,
+            COALESCE(a.name, 'System') AS changed_by
+        FROM vehicle_status_history vsh
+        INNER JOIN vehicle_basics vb
+            ON vsh.vehicle_id = vb.id
+        LEFT JOIN accounts a
+            ON vsh.changed_by = a.id
+        ORDER BY vsh.created_at DESC
+        LIMIT ?
+    ";
+
+        $stmt = $this->con->prepare($sql);
+        $stmt->bindValue(1, (int) $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function get_current_month_revenue_by_agents($month, $year)
     {
         $query = "

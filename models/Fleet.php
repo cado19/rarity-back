@@ -99,6 +99,33 @@ class Fleet
         // when we instantiate a new post we'll pass in the db as a parameter
         $this->con = $db;
     }
+    // ---------------------------------------- STATUS HISTORY FUNCTIONS  ----------------------------------------
+    public function log_vehicle_status(
+        $vehicle_id,
+        $status,
+        $changed_by = null,
+        $notes = null
+    ) {
+        $sql = "
+        INSERT INTO vehicle_status_history
+        (
+            vehicle_id,
+            status,
+            changed_by,
+            notes
+        )
+        VALUES (?, ?, ?, ?)
+    ";
+
+        $stmt = $this->con->prepare($sql);
+
+        return $stmt->execute([
+            $vehicle_id,
+            $status,
+            $changed_by,
+            $notes,
+        ]);
+    }
 
     // get vehicles
     public function read()
@@ -595,23 +622,6 @@ class Fleet
             }
         } catch (PDOException $e) {
             return ["status" => "Error", "message" => $e->getMessage()];
-        }
-    }
-
-    // log anytime status of a vehicle changes
-    public function log_status_change($status, $changed_by = null, $notes = null)
-    {
-        try {
-            $sql = "INSERT INTO vehicle_status_history (vehicle_id, status, changed_by, notes)
-                VALUES (:vehicle_id, :status, :changed_by, :notes)";
-            $stmt = $this->con->prepare($sql);
-            $stmt->bindParam(':vehicle_id', $this->id);
-            $stmt->bindParam(':status', $status);
-            $stmt->bindParam(':changed_by', $changed_by);
-            $stmt->bindParam(':notes', $notes);
-            $stmt->execute();
-        } catch (PDOException $e) {
-            error_log("Error logging status change: " . $e->getMessage());
         }
     }
 

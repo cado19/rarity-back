@@ -9,6 +9,7 @@ $database = new Database();
 $db       = $database->connect();
 
 $booking = new Booking($db);
+$fleet   = new Fleet($db);
 
 // Read JSON body
 $data = json_decode(file_get_contents("php://input"));
@@ -29,6 +30,13 @@ try {
                                                            // $booking->mileage    = intval($data->mileage) ?? 0;
 
     if ($booking->complete_booking_with_mileage()) {
+        // Log vehicle history status
+        $fleet->log_vehicle_status(
+            $booking->vehicle_id,
+            'completed',
+            $booking->account_id,
+            "Booking {$booking->id} completed"
+        );
         $response['status']  = "Success";
         $response['message'] = "Successfully completed booking and logged mileage";
     } else {

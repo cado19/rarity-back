@@ -31,7 +31,7 @@ $booking->start_time = $data->start_time;
 $booking->end_time   = $data->end_time;
 
 // Fetch old booking for logging history
-$oldBooking = $booking->read_single();
+$oldBooking = $booking->get_booking_data();
 
 if (! $oldBooking) {
     echo json_encode([
@@ -111,8 +111,16 @@ if ($booking->d_id == 25) {
 
 // Save booking update
 if ($booking->update()) {
+    // Log vehicle history status
+    $fleet->log_vehicle_status(
+        $booking->vehicle_id,
+        'edit_booking',
+        $booking->account_id,
+        "Booking {$booking->booking_no} edited"
+    );
+
     // fetch the new details after the update
-    $newBooking = $booking->read_single();
+    $newBooking = $booking->get_booking_data();
 
     // Compare old vs new values
     $oldData = [];

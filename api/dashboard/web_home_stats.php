@@ -25,6 +25,10 @@ $currentMonthBookingCountByAgents   = $home->get_current_month_booking_count_by_
 $currentMonthCompletionRateByAgents = $home->get_current_month_completion_rate_by_agents($month, $year);
 $currentMonthVehiclePerformance     = $home->get_current_month_vehicle_performance($month, $year);
 
+// Get recent history
+$recentHistory        = $home->get_recent_booking_history(10); // booking history
+$recentVehicleHistory = $home->get_recent_vehicle_history(10); // vehicle history
+
 $response = [
     "status"    => "Success",
     "message"   => "Dashboard stats retrieved",
@@ -49,6 +53,9 @@ $response = [
             "current_month_booking_count_by_agents"   => $currentMonthBookingCountByAgents,
             "current_month_completion_rate_by_agents" => $currentMonthCompletionRateByAgents,
             "current_month_vehicle_performance"       => $currentMonthVehiclePerformance,
+            "recent_history"                          => $recentHistory,
+            "recent_vehicle_history"                  => $recentVehicleHistory,
+
         ],
     ],
 ];

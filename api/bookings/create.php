@@ -112,6 +112,14 @@ if ($booking->create()) {
     $contract->booking_id = $booking->id;
     $contract->create();
 
+    // Log vehicle history status
+    $fleet->log_vehicle_status(
+        $booking->vehicle_id,
+        'reserved',
+        $booking->account_id,
+        "Booking {$booking->booking_no} created"
+    );
+
     // Send notification
     $notification            = new Notification($db);
     $notification->user_id   = $booking->c_id;
