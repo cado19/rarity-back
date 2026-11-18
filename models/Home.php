@@ -404,6 +404,11 @@ class Home
 
             switch ($row['action']) {
 
+                case 'create':
+                    $description =
+                        "{$user} created booking {$booking}";
+                    break;
+
                 case 'activate':
                     $description =
                         "{$user} activated booking {$booking}";
