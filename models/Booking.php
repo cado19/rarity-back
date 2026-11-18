@@ -128,6 +128,32 @@ class Booking
             $old = $row['old_data'] ? json_decode($row['old_data'], true) : [];
             $new = $row['new_data'] ? json_decode($row['new_data'], true) : [];
 
+            foreach (['old_data', 'new_data'] as $dataset) {
+                if (! empty($row[$dataset]['vehicle_id'])) {
+                    $row[$dataset]['vehicle'] = $this->getVehicleLabel($row[$dataset]['vehicle_id']);
+                    unset($row[$dataset]['vehicle_id']);
+                }
+                if (! empty($row[$dataset]['account_id'])) {
+
+                    $row[$dataset]['account'] =
+                    $this->getAccountLabel(
+                        $row[$dataset]['account_id']
+                    );
+
+                    unset($row[$dataset]['account_id']);
+                }
+
+                if (! empty($row[$dataset]['account_driver_id'])) {
+
+                    $row[$dataset]['driver'] =
+                    $this->getAccountLabel(
+                        $row[$dataset]['account_driver_id']
+                    );
+
+                    unset($row[$dataset]['account_driver_id']);
+                }
+            }
+
             $bookingLabel = $row['booking_no'] ? "Booking #{$row['booking_no']}" : "Booking ID {$row['booking_id']}";
             $user         = $row['performed_by'];
 
@@ -312,7 +338,93 @@ class Booking
             ? json_decode($row['new_data'], true)
             : [];
 
+        $row['old_data'] = $this->transformHistoryData($row['old_data']);
+        $row['new_data'] = $this->transformHistoryData($row['new_data']);
+
         return $row;
+    }
+
+// Vehicle helper method to get human readable vehicle label
+    private function getVehicleLabel($vehicleId)
+    {
+        $stmt = $this->con->prepare("
+        SELECT
+            make,
+            model,
+            number_plate
+        FROM vehicle_basics
+        WHERE id = ?
+    ");
+
+        $stmt->execute([$vehicleId]);
+
+        $vehicle = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (! $vehicle) {
+            return $vehicleId;
+        }
+
+        return "{$vehicle['make']} {$vehicle['model']} ({$vehicle['number_plate']})";
+    }
+
+// Driver helper method to get human readable driver label
+    private function getDriverLabel($driverId)
+    {
+        $stmt = $this->con->prepare("
+        SELECT CONCAT(first_name,' ',last_name)
+        FROM drivers
+        WHERE id = ?
+    ");
+
+        $stmt->execute([$driverId]);
+
+        return $stmt->fetchColumn() ?: $driverId;
+    }
+
+// Account helper method to get human readable account label
+    private function getAccountLabel($accountId)
+    {
+        $stmt = $this->con->prepare("
+        SELECT name
+        FROM accounts
+        WHERE id = ?
+    ");
+
+        $stmt->execute([$accountId]);
+
+        return $stmt->fetchColumn() ?: $accountId;
+    }
+
+// Transform all the history data to human readable form
+    private function transformHistoryData(array $data)
+    {
+        if (! empty($data['vehicle_id'])) {
+
+            $data['vehicle'] =
+            $this->getVehicleLabel($data['vehicle_id']);
+
+            unset($data['vehicle_id']);
+        }
+
+        if (! empty($data['account_id'])) {
+
+            $data['account'] =
+            $this->getAccountLabel($data['account_id']);
+
+            unset($data['account_id']);
+        }
+
+        if (! empty($data['account_driver_id'])) {
+
+            $data['driver'] =
+            $this->getAccountLabel(
+                $data['account_driver_id']
+            );
+
+            unset($data['account_driver_id']);
+        }
+
+        return $data;
     }
 
 // ---------------------------------------- BOOKING READ FUNCTIONS ---------------------------------------- //
