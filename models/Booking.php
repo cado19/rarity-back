@@ -1230,6 +1230,7 @@ class Booking
     public function extend_booking()
     {
         try {
+            $this->con->beginTransaction();
             // 1. Fetch existing values before updating
             $currentStmt = $this->con->prepare("
             SELECT end_date, duration, total, status
